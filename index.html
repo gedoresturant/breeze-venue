@@ -90,7 +90,7 @@ if(typeof faceapi==='undefined'){
   <div id="securityPanel" class="hidden p-4">
     <h2 class="font-bold text-xl mb-4">الأمن - التحقق Face ID وعرض كل البيانات</h2>
     <div class="grid md:grid-cols-3 gap-4 mb-4"><div class="bg-white p-3 rounded-xl"><div class="text-xs">دخول اليوم</div><div id="sToday" class="text-xl font-bold">0</div></div><div class="bg-white p-3 rounded-xl"><div class="text-xs">مختلفين اليوم</div><div id="sUniqueToday" class="text-xl font-bold">0</div></div><div class="bg-white p-3 rounded-xl"><div class="text-xs">دخول الشهر</div><div id="sMonth" class="text-xl font-bold">0</div></div></div>
-    <div class="grid md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl text-center"><video id="secVideo" width="100%" height="240" autoplay muted class="rounded-lg bg-black mx-auto"></video><button onclick="verifyFace()" class="mt-3 w-full bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold">فحص الوجه Face ID - دقة 0.45</button></div><div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-2">نتيجة الفحص</h3><div id="verifyResult" class="text-sm">لم يتم الفحص بعد - سيظهر هنا كل بيانات العضو وجميع اشتراكاته</div><div id="memberFullData" class="mt-4 hidden border-t pt-4"></div></div></div>
+    <div class="grid md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl text-center"><div id="modelStatus" class="text-xs bg-yellow-50 p-2 rounded-lg mb-2 border">جاري تحميل نماذج Face ID...</div><video id="secVideo" width="100%" height="240" autoplay muted class="rounded-lg bg-black mx-auto"></video><button onclick="verifyFace()" class="mt-3 w-full bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold">فحص الوجه Face ID - دقة 0.45</button></div><div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-2">نتيجة الفحص</h3><div id="verifyResult" class="text-sm">لم يتم الفحص بعد - سيظهر هنا كل بيانات العضو وجميع اشتراكاته</div><div id="memberFullData" class="mt-4 hidden border-t pt-4"></div></div></div>
   </div>
 
   <!-- MEMBER -->
@@ -234,40 +234,154 @@ function euclidean(a,b){let s=0;for(let i=0;i<a.length;i++){let d=a[i]-b[i];s+=d
 async function captureFace(){
   if(typeof faceapi==='undefined'){document.getElementById('faceStatus').innerText='⚠️ مكتبة الوجه لم تحمل - جاري المحاولة...';await loadFaceModels(); setTimeout(captureFace,1000); return}
   let video=document.getElementById('video');let canvas=document.getElementById('canvas');if(!video.videoWidth)return;canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();if(det){faceDescriptor=Array.from(det.descriptor);document.getElementById('faceStatus').innerText='✓ تم التقاط البصمة - دقة 0.45';}else document.getElementById('faceStatus').innerText='لم يتم العثور على وجه';}catch(e){faceDescriptor=[...Array(128)].map(()=>Math.random());document.getElementById('faceStatus').innerText='✓ تم (تجريبي)'}}
-async function verifyFace(){
+let modelsLoaded = false;
+let modelsLoading = false;
+async function loadFaceModels(){
+  if(modelsLoaded) return true;
+  if(modelsLoading) return false;
+  modelsLoading = true;
+  let statusEl = document.getElementById('modelStatus');
+  if(statusEl) statusEl.innerText = 'جاري تحميل نماذج Face ID...';
   if(typeof faceapi==='undefined'){
-    document.getElementById('verifyResult').innerHTML='<div class="bg-yellow-50 p-3 rounded-xl">⚠️ مكتبة Face ID تحمل... انتظر ثانيتين وجرب تاني. لو استمرت المشكلة، افتح الموقع على Chrome وليس Facebook browser</div>';
+    console.warn('faceapi not loaded yet');
+    modelsLoading = false;
+    if(statusEl) statusEl.innerText = 'مكتبة Face ID لم تحمل - استخدم البحث اليدوي';
+    return false;
+  }
+  try{
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    const MODEL_URL2 = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@0.5.0/model';
+    // Try with timeout
+    const timeout = (ms) => new Promise((_,rej)=>setTimeout(()=>rej('timeout'), ms));
+    try{
+      await Promise.race([
+        (async()=>{await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL); await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL); await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);})(),
+        timeout(8000)
+      ]);
+      modelsLoaded = true;
+      if(statusEl) statusEl.innerText = '✓ نماذج Face ID جاهزة - دقة 0.45';
+      console.log('Models loaded from CDN1');
+    }catch(e){
+      console.warn('CDN1 failed', e);
+      try{
+        await Promise.race([
+          (async()=>{await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL2); await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL2); await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL2);})(),
+          timeout(8000)
+        ]);
+        modelsLoaded = true;
+        if(statusEl) statusEl.innerText = '✓ نماذج جاهزة';
+      }catch(e2){
+        console.error('Both CDNs failed', e2);
+        if(statusEl) statusEl.innerText = '⚠️ النماذج لم تحمل - سيتم استخدام وضع البحث اليدوي السريع';
+        modelsLoaded = false;
+      }
+    }
+  }catch(e){console.error(e)}
+  modelsLoading = false;
+  return modelsLoaded;
+}
+
+async function verifyFace(){
+  let resultDiv = document.getElementById('verifyResult');
+  let fullDiv = document.getElementById('memberFullData');
+  if(typeof faceapi==='undefined'){
+    resultDiv.innerHTML='<div class="bg-yellow-50 p-4 rounded-xl border border-yellow-300"><div class="font-bold">⚠️ مكتبة Face ID لم تحمل بعد</div><div class="text-xs mt-2">افتح الموقع في Chrome وليس من فيسبوك<br>أو استخدم البحث اليدوي السريع أدناه:</div><div class="mt-3"><input id="manualSearch" placeholder="ابحث بالاسم أو البطاقة أو الموبايل" class="w-full p-2 border rounded-lg"><button onclick="manualSearch()" class="mt-2 w-full bg-emerald-600 text-white p-2 rounded-lg">بحث يدوي سريع</button></div></div>';
     await loadFaceModels();
     return;
   }
-
-  let video=document.getElementById('secVideo');let resultDiv=document.getElementById('verifyResult');let fullDiv=document.getElementById('memberFullData');
-  resultDiv.innerHTML='جاري الفحص بدقة 0.45...';fullDiv.classList.add('hidden');
-  try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();let desc=det?Array.from(det.descriptor):[...Array(128)].map(()=>Math.random());let best=null,min=Infinity;members.forEach(m=>{if(m.face_descriptor){let d=Array.isArray(m.face_descriptor)?m.face_descriptor:(typeof m.face_descriptor==='string'?JSON.parse(m.face_descriptor):m.face_descriptor)||[];if(d.length){let dist=euclidean(desc,d);if(dist<min){min=dist;best=m}}}});if(best&&min<0.45){
-    resultDiv.innerHTML=`<div class="bg-green-50 border border-green-200 p-3 rounded-xl"><div class="font-bold text-green-700 text-lg">✓ ${best.full_name} - مسموح</div><div class="text-xs">المسافة: ${min.toFixed(3)} < 0.45 - مطابق</div><div class="text-xs">بطاقة: ${best.national_id} - موبايل: ${best.phone}</div><button onclick="recordEntry('${best.id}')" class="mt-2 w-full bg-green-600 text-white px-4 py-2 rounded-lg font-bold">تسجيل دخول</button></div>`;
-    // عرض كل البيانات والاشتراكات
-    let memPayments=payments.filter(p=>p.member_id===best.id);
-    let sub=plans.find(p=>p.id===best.plan_id);
-    fullDiv.classList.remove('hidden');
-    fullDiv.innerHTML=`
-      <h4 class="font-bold mb-2">كل بيانات العضو وجميع اشتراكاته:</h4>
-      <div class="space-y-2 text-sm">
-        <div><b>الاسم:</b> ${best.full_name}</div>
-        <div><b>رقم العضوية:</b> ${best.username}</div>
-        <div><b>رقم البطاقة:</b> ${best.national_id}</div>
-        <div><b>الموبايل:</b> ${best.phone}</div>
-        <div><b>اليوزر:</b> ${best.national_id} - الباسورد: آخر 7 أرقام ${ (best.national_id||'').slice(-7)}</div>
-        <div><b>الحالة:</b> ${best.status} - صالح حتى: ${best.expiry_date}</div>
-        <div><b>الخدمة الحالية:</b> ${sub?sub.name+' - '+sub.price+'ج':'-'}</div>
-        <div><b>أفراد الأسرة:</b> ${best.family_members?.length||0}</div>
-        <div><b>سجل المدفوعات:</b></div>
-        <div class="max-h-32 overflow-auto border rounded p-2">${memPayments.map(p=>`<div class="flex justify-between text-xs py-1 border-b"><span>${p.plan_name} - ${p.amount}ج - ${p.payment_method}</span><span>${p.created_at?.slice(0,10)}</span></div>`).join('')||'لا يوجد'}</div>
-        <div><b>سجل الدخول هذا الشهر:</b> ${entries.filter(e=>e.member_id===best.id && new Date(e.created_at).getMonth()===new Date().getMonth()).length} مرة</div>
-      </div>`;
-  }else{
-    resultDiv.innerHTML=`<div class="bg-red-50 border-2 border-red-300 p-4 rounded-xl"><div class="font-bold text-red-700 text-lg">وجه غير معروف - غير مسجل</div><div class="text-xs mt-1">المسافة: ${min===Infinity?'-':min.toFixed(3)} (يجب <0.45)</div><div class="text-xs mt-2 text-red-600">هذا الوجه غير مسجل - برجاء التسجيل في الرسبشن أولا</div></div>`;
-  }}catch(e){resultDiv.innerHTML='<div class="bg-red-50 p-3 rounded-xl">خطأ: '+e.message+'</div>'}
+  resultDiv.innerHTML='جاري الفحص بدقة 0.45... (قد يستغرق 2-3 ثواني أول مرة)';
+  if(!modelsLoaded){
+    let loaded = await loadFaceModels();
+    if(!loaded){
+      // Fallback to manual search if models fail
+      resultDiv.innerHTML='<div class="bg-blue-50 p-4 rounded-xl border"><div class="font-bold">النماذج بطيئة على 4G - استخدم البحث اليدوي السريع:</div><div class="mt-3"><input id="manualSearch" placeholder="اكتب اسم العضو أو رقم البطاقة" class="w-full p-3 border rounded-xl"><button onclick="manualSearch()" class="mt-2 w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">🔍 بحث يدوي سريع - يظهر كل بياناته</button></div><div class="text-xs mt-2 text-slate-500">هذا الوضع يعمل 100% حتى بدون Face ID</div></div>';
+      return;
+    }
+  }
+  // Try actual face detection with timeout
+  try{
+    let video=document.getElementById('secVideo');
+    if(!video || !video.srcObject){
+      resultDiv.innerHTML='<div class="bg-red-50 p-3 rounded-xl">الكاميرا لم تفتح - دوس السماح للكاميرا<br><button onclick="startVideo(\'secVideo\')" class="mt-2 bg-slate-800 text-white px-3 py-1 rounded">إعادة تشغيل الكاميرا</button></div>';
+      return;
+    }
+    const detectionPromise = faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({inputSize: 224, scoreThreshold: 0.5})).withFaceLandmarks().withFaceDescriptor();
+    const timeoutPromise = new Promise((_,rej)=>setTimeout(()=>rej('timeout'), 7000));
+    let det = await Promise.race([detectionPromise, timeoutPromise]);
+    
+    if(!det){
+      resultDiv.innerHTML='<div class="bg-yellow-50 p-3 rounded-xl"><div class="font-bold">لم يتم العثور على وجه - قرب وجهك أكثر</div><div class="text-xs mt-1">تأكد من الإضاءة الجيدة</div><button onclick="verifyFace()" class="mt-2 bg-emerald-600 text-white px-4 py-1 rounded-lg">حاول مرة أخرى</button><div class="mt-3 border-t pt-3"><input id="manualSearch" placeholder="أو ابحث بالاسم/البطاقة" class="w-full p-2 border rounded-lg"><button onclick="manualSearch()" class="mt-1 w-full bg-slate-700 text-white p-2 rounded-lg text-sm">بحث يدوي</button></div></div>';
+      return;
+    }
+    
+    let desc=Array.from(det.descriptor);
+    let best=null,min=Infinity;
+    members.forEach(m=>{
+      if(m.face_descriptor){
+        try{
+          let d=Array.isArray(m.face_descriptor)?m.face_descriptor:JSON.parse(m.face_descriptor);
+          if(d && d.length){let dist=euclidean(desc,d);if(dist<min){min=dist;best=m}}
+        }catch(e){}
+      }
+    });
+    
+    if(best&&min<0.45){
+      resultDiv.innerHTML=`<div class="bg-green-50 border-2 border-green-300 p-4 rounded-xl"><div class="font-bold text-green-700 text-lg">✓ ${best.full_name} - مسموح بدقة ${min.toFixed(3)}</div><div class="text-xs mt-1">بطاقة: ${best.national_id} - موبايل: ${best.phone} - المسافة: ${min.toFixed(3)} < 0.45</div><button onclick="recordEntry('${best.id}')" class="mt-3 w-full bg-green-600 text-white px-4 py-3 rounded-xl font-bold text-lg">✓ تسجيل دخول</button></div>`;
+      showMemberFullData(best, min);
+    }else{
+      let msg = best ? `وجه غير مطابق - أقرب عضو ${best.full_name} مسافة ${min.toFixed(3)} > 0.45` : 'وجه غير مسجل في النظام';
+      resultDiv.innerHTML=`<div class="bg-red-50 border-2 border-red-300 p-4 rounded-xl"><div class="font-bold text-red-700 text-lg">وجه غير معروف - غير مسجل</div><div class="text-xs mt-1">${msg}</div><div class="text-xs mt-2">هذا الوجه غير مسجل - برجاء التسجيل في الرسبشن أولا</div><div class="mt-3 border-t pt-3"><input id="manualSearch" placeholder="أو ابحث بالاسم/البطاقة للتحقق اليدوي" class="w-full p-2 border rounded-lg"><button onclick="manualSearch()" class="mt-1 w-full bg-slate-700 text-white p-2 rounded-lg">بحث يدوي سريع</button></div></div>`;
+    }
+  }catch(e){
+    console.error('verifyFace error', e);
+    if(e==='timeout'){
+      resultDiv.innerHTML='<div class="bg-yellow-50 p-4 rounded-xl"><div class="font-bold">الفحص بطيء - النت ضعيف</div><div class="text-xs mt-2">استخدم البحث اليدوي السريع:</div><div class="mt-3"><input id="manualSearch" placeholder="اسم أو بطاقة" class="w-full p-3 border rounded-xl"><button onclick="manualSearch()" class="mt-2 w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">بحث يدوي</button></div></div>';
+    }else{
+      resultDiv.innerHTML='<div class="bg-red-50 p-3 rounded-xl">خطأ: '+e.message+'<br><button onclick="verifyFace()" class="mt-2 bg-emerald-600 text-white px-3 py-1 rounded">حاول مرة أخرى</button><div class="mt-2"><input id="manualSearch" placeholder="بحث يدوي" class="w-full p-2 border rounded"><button onclick="manualSearch()" class="mt-1 w-full bg-slate-700 text-white p-2 rounded text-sm">بحث يدوي</button></div></div>';
+    }
+  }
 }
+
+function showMemberFullData(member, distance){
+  let fullDiv=document.getElementById('memberFullData');
+  let memPayments=payments.filter(p=>p.member_id===member.id);
+  let sub=plans.find(p=>p.id===member.plan_id);
+  fullDiv.classList.remove('hidden');
+  fullDiv.innerHTML=`
+    <h4 class="font-bold mb-2">كل بيانات العضو وجميع اشتراكاته:</h4>
+    <div class="space-y-2 text-sm bg-slate-50 p-3 rounded-xl">
+      <div><b>الاسم:</b> ${member.full_name}</div>
+      <div><b>رقم العضوية:</b> ${member.username}</div>
+      <div><b>رقم البطاقة (اليوزر):</b> ${member.national_id}</div>
+      <div><b>الباسورد:</b> آخر 7 أرقام: ${(member.national_id||'').slice(-7)}</div>
+      <div><b>الموبايل:</b> ${member.phone}</div>
+      <div><b>الحالة:</b> <span class="px-2 py-1 rounded text-xs ${member.status==='active'?'bg-green-100 text-green-700':'bg-red-100'}">${member.status}</span> - حتى: ${member.expiry_date}</div>
+      <div><b>الخدمة:</b> ${sub?sub.name+' - '+sub.price+'ج':'-'}</div>
+      <div><b>المسافة Face ID:</b> ${distance?distance.toFixed(3):'-'}</div>
+      <div><b>سجل المدفوعات (${memPayments.length}):</b></div>
+      <div class="max-h-32 overflow-auto border rounded p-2 bg-white">${memPayments.map(p=>`<div class="flex justify-between text-xs py-1 border-b"><span>${p.plan_name} - ${p.amount}ج - ${p.payment_method}</span><span>${p.created_at?.slice(0,10)}</span></div>`).join('')||'لا يوجد'}</div>
+      <div><b>دخول هذا الشهر:</b> ${entries.filter(e=>e.member_id===member.id && new Date(e.created_at).getMonth()===new Date().getMonth()).length} مرة</div>
+      <button onclick="recordEntry('${member.id}')" class="mt-2 w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">تسجيل دخول الآن</button>
+    </div>`;
+}
+
+function manualSearch(){
+  let q=document.getElementById('manualSearch')?.value?.toLowerCase()||'';
+  if(!q){alert('اكتب اسم أو بطاقة');return}
+  let res=members.filter(m=>m.full_name.toLowerCase().includes(q) || (m.national_id||'').includes(q) || (m.phone||'').includes(q) || (m.username||'').toLowerCase().includes(q));
+  let resultDiv=document.getElementById('verifyResult');
+  if(!res.length){
+    resultDiv.innerHTML='<div class="bg-red-50 p-3 rounded-xl">لم يتم العثور على عضو بهذا الاسم/البطاقة<br>جرب: '+q+'</div>';
+    return;
+  }
+  let member=res[0];
+  resultDiv.innerHTML=`<div class="bg-blue-50 border-2 border-blue-300 p-4 rounded-xl"><div class="font-bold text-blue-700 text-lg">✓ ${member.full_name} - تم العثور عليه بالبحث اليدوي</div><div class="text-xs mt-1">بطاقة: ${member.national_id} - موبايل: ${member.phone}</div><button onclick="recordEntry('${member.id}')" class="mt-3 w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-bold">تسجيل دخول يدوي</button></div>`;
+  showMemberFullData(member, null);
+  if(res.length>1){
+    resultDiv.innerHTML+= '<div class="mt-2 text-xs">نتائج أخرى: '+res.slice(1,3).map(m=>m.full_name).join(', ')+'</div>';
+  }
+}
+
 async function recordEntry(memberId){await sbInsert('breeze_entries',{member_id:memberId,entry_type:'face',verified_by:currentUser.username});alert('✓ تم تسجيل الدخول');loadData()}
 
 async function saveMember(){
