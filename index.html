@@ -4,7 +4,15 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Breeze Venue v7.0 RBAC - الصلاحيات الصحيحة</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@0.5.0/dist/face-api.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+// Fallback if first CDN fails
+if(typeof faceapi==='undefined'){
+  document.write('<script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"><\/script>');
+}
+</script>
+
 <meta name="theme-color" content="#10b981">
 <style>@media print{.no-print{display:none} body{background:white}}</style>
 </head>
@@ -200,10 +208,39 @@ function exportCSV(){let rows=[['الاسم','العضوية','الموبايل'
 
 function updateSecurityStats(){let today=new Date();today.setHours(0,0,0,0);let tEntries=entries.filter(e=>new Date(e.created_at)>=today);let sToday=document.getElementById('sToday');if(sToday){sToday.innerText=tEntries.length;document.getElementById('sUniqueToday').innerText=new Set(tEntries.map(e=>e.member_id)).size;let month=new Date();month.setDate(1);month.setHours(0,0,0,0);document.getElementById('sMonth').innerText=entries.filter(e=>new Date(e.created_at)>=month).length;}}
 
-async function startVideo(id){try{let v=document.getElementById(id);if(!v)return;let s=await navigator.mediaDevices.getUserMedia({video:{}});v.srcObject=s;}catch(e){}}
+async function loadFaceModels(){
+  if(typeof faceapi==='undefined'){console.warn('faceapi not loaded');return}
+  try{
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@0.5.0/model';
+    // Try new CDN for models
+    const MODEL_URL2 = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+    // Load with fallback
+    try{
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    }catch(e){
+      console.warn('Model CDN1 failed, trying CDN2', e);
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL2);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL2);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL2);
+    }
+    console.log('Face models loaded');
+  }catch(e){console.error('Models failed', e)}
+}
+loadFaceModels();
+async function startVideo(id){try{let v=document.getElementById(id);if(!v)return;let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});v.srcObject=s;}catch(e){console.error('Camera', e)}}
 function euclidean(a,b){let s=0;for(let i=0;i<a.length;i++){let d=a[i]-b[i];s+=d*d}return Math.sqrt(s)}
-async function captureFace(){let video=document.getElementById('video');let canvas=document.getElementById('canvas');if(!video.videoWidth)return;canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();if(det){faceDescriptor=Array.from(det.descriptor);document.getElementById('faceStatus').innerText='✓ تم التقاط البصمة - دقة 0.45';}else document.getElementById('faceStatus').innerText='لم يتم العثور على وجه';}catch(e){faceDescriptor=[...Array(128)].map(()=>Math.random());document.getElementById('faceStatus').innerText='✓ تم (تجريبي)'}}
+async function captureFace(){
+  if(typeof faceapi==='undefined'){document.getElementById('faceStatus').innerText='⚠️ مكتبة الوجه لم تحمل - جاري المحاولة...';await loadFaceModels(); setTimeout(captureFace,1000); return}
+  let video=document.getElementById('video');let canvas=document.getElementById('canvas');if(!video.videoWidth)return;canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();if(det){faceDescriptor=Array.from(det.descriptor);document.getElementById('faceStatus').innerText='✓ تم التقاط البصمة - دقة 0.45';}else document.getElementById('faceStatus').innerText='لم يتم العثور على وجه';}catch(e){faceDescriptor=[...Array(128)].map(()=>Math.random());document.getElementById('faceStatus').innerText='✓ تم (تجريبي)'}}
 async function verifyFace(){
+  if(typeof faceapi==='undefined'){
+    document.getElementById('verifyResult').innerHTML='<div class="bg-yellow-50 p-3 rounded-xl">⚠️ مكتبة Face ID تحمل... انتظر ثانيتين وجرب تاني. لو استمرت المشكلة، افتح الموقع على Chrome وليس Facebook browser</div>';
+    await loadFaceModels();
+    return;
+  }
+
   let video=document.getElementById('secVideo');let resultDiv=document.getElementById('verifyResult');let fullDiv=document.getElementById('memberFullData');
   resultDiv.innerHTML='جاري الفحص بدقة 0.45...';fullDiv.classList.add('hidden');
   try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();let desc=det?Array.from(det.descriptor):[...Array(128)].map(()=>Math.random());let best=null,min=Infinity;members.forEach(m=>{if(m.face_descriptor){let d=Array.isArray(m.face_descriptor)?m.face_descriptor:(typeof m.face_descriptor==='string'?JSON.parse(m.face_descriptor):m.face_descriptor)||[];if(d.length){let dist=euclidean(desc,d);if(dist<min){min=dist;best=m}}}});if(best&&min<0.45){
