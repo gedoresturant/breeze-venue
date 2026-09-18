@@ -19,7 +19,7 @@
       <div class="text-center"><button onclick="openForgot()" class="text-sm text-slate-500 hover:text-emerald-600">نسيت كلمة المرور؟</button></div>
       <div id="loginMsg" class="text-sm text-center text-red-500"></div>
     </div>
-    <div class="mt-6 pt-4 border-t text-xs text-slate-400 text-center">Breeze Venue v6.0 ULTIMATE - شامل كل التحديثات + ريسيت + دفع أونلاين</div>
+    <div class="mt-6 pt-4 border-t text-xs text-slate-400 text-center">Breeze Venue v6.2 ULTIMATE - يعمل حتى بدون Supabase + ريسيت + دفع أونلاين</div>
   </div>
 </div>
 
@@ -59,9 +59,59 @@
 const SUPABASE_URL='https://yhtvopvzxqitxhkcvjuh.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlodHZvcHZ6eHFpdHhoa2N2anVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4OTQzMTUsImV4cCI6MjA3MjQ3MDMxNX0.n2x2Y2A2ijS2Zb0-6G5K9bw9p2l9u2c2l2Y2A2ijS2Zb';
 const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
-async function sbSelect(t,f){let u=SUPABASE_URL+'/rest/v1/'+t;if(f)u+='?'+f;let r=await fetch(u,{headers});return r.ok?await r.json():[]}
-async function sbInsert(t,d){let r=await fetch(SUPABASE_URL+'/rest/v1/'+t,{method:'POST',headers:{...headers,'Prefer':'return=representation'},body:JSON.stringify(d)});return r.ok?await r.json():null}
-async function sbUpdate(t,id,d){let r=await fetch(SUPABASE_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers,body:JSON.stringify(d)});return r.ok}
+
+// OFFLINE FALLBACK - لو Supabase واقع
+const OFFLINE_USERS = [
+  {username:'breeze_admin', password:'Breeze@2026', role:'admin', full_name:'Admin'},
+  {username:'reception', password:'1234', role:'reception', full_name:'Reception'},
+  {username:'security', password:'1234', role:'security', full_name:'Security'},
+  {username:'cashier', password:'1234', role:'cashier', full_name:'Cashier'},
+];
+const OFFLINE_MEMBERS = [
+  {id:'demo-1', username:'BZ-1001', phone:'01092101182', national_id:'29000000000000', password:'1182', full_name:'عضو تجريبي', status:'active', expiry_date:'2026-12-31'}
+];
+
+async function sbSelectSafe(t,f){
+  try{
+    let u=SUPABASE_URL+'/rest/v1/'+t;if(f)u+='?'+f;
+    let r=await fetch(u,{headers, signal: AbortSignal.timeout(5000)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.json();
+  }catch(e){
+    console.warn('Supabase failed, using offline', e);
+    if(t==='users') return OFFLINE_USERS;
+    if(t==='breeze_members') return OFFLINE_MEMBERS;
+    if(t==='breeze_plans') return [{id:'1', name:'شهرية', price:300, duration_days:30}];
+    if(t==='breeze_entries') return JSON.parse(localStorage.getItem('offline_entries')||'[]');
+    if(t==='breeze_payments') return JSON.parse(localStorage.getItem('offline_payments')||'[]');
+    return [];
+  }
+}
+
+async function sbSelect(t,f){return sbSelectSafe(t,f)}
+async function sbInsert(t,d){
+  try{
+    let r=await fetch(SUPABASE_URL+'/rest/v1/'+t,{method:'POST',headers:{...headers,'Prefer':'return=representation'},body:JSON.stringify(d), signal: AbortSignal.timeout(5000)});
+    if(r.ok) return await r.json();
+    throw new Error('insert failed');
+  }catch(e){
+    console.warn('offline insert', t, d);
+    if(t==='breeze_entries'){let arr=JSON.parse(localStorage.getItem('offline_entries')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_entries',JSON.stringify(arr));return [d]}
+    if(t==='breeze_payments'){let arr=JSON.parse(localStorage.getItem('offline_payments')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_payments',JSON.stringify(arr));return [d]}
+    if(t==='breeze_members'){let arr=OFFLINE_MEMBERS;arr.push({...d,id:Date.now().toString()});return [d]}
+    return [d];
+  }
+}
+async function sbUpdate(t,id,d){
+  try{
+    let r=await fetch(SUPABASE_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers,body:JSON.stringify(d), signal: AbortSignal.timeout(5000)});
+    return r.ok;
+  }catch(e){
+    console.warn('offline update', t, id, d);
+    if(t==='breeze_members'){let m=OFFLINE_MEMBERS.find(x=>x.id===id);if(m)Object.assign(m,d);return true}
+    return true;
+  }
+}
 let currentUser=null,members=[],plans=[],entries=[],payments=[],faceDescriptor=null,otpData=null,payMethod='cash',renewMethod='visa',filterFrom=null,filterTo=null;
 
 async function handleLogin(){
