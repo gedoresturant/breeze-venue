@@ -2,117 +2,127 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Breeze Venue v6.0 ULTIMATE</title>
+<title>Breeze Venue v7.0 RBAC - الصلاحيات الصحيحة</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@0.5.0/dist/face-api.min.js"></script>
-<meta name="theme-color" content="#10b981"><meta name="apple-mobile-web-app-capable" content="yes">
-<style>@media print{.no-print{display:none !important}}</style>
+<meta name="theme-color" content="#10b981">
+<style>@media print{.no-print{display:none} body{background:white}}</style>
 </head>
 <body class="bg-slate-900 min-h-screen">
+<!-- Login -->
 <div id="loginPage" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-900 to-slate-800">
-  <div class="text-center mb-8"><div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold">B</div><h1 class="text-3xl font-bold text-white mb-2">مرحبا بكم في نادي Breeze Venue</h1><p class="text-slate-400">نظام إدارة الأعضاء والدخول الذكي</p></div>
+  <div class="text-center mb-8"><div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold">B</div><h1 class="text-3xl font-bold text-white">مرحبا بكم في نادي Breeze Venue</h1><p class="text-slate-400 mt-2">نظام إدارة الأعضاء والدخول الذكي - v7.0</p></div>
   <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
     <div class="space-y-4">
-      <div><label class="text-sm font-medium">اسم المستخدم / الموبايل / البطاقة / العضوية</label><input id="loginUser" class="w-full mt-1 p-3 border rounded-xl" placeholder="BZ-1001 أو 0109..."></div>
-      <div><label class="text-sm font-medium">كلمة المرور</label><input id="loginPass" type="password" class="w-full mt-1 p-3 border rounded-xl" placeholder="••••"></div>
-      <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700">تسجيل دخول</button><div class="text-xs text-slate-400 mt-2 text-center">لو بيقف على جاري، دوس Enter أو تأكد أن RLS معطل في Supabase</div>
-      <div class="text-center"><button onclick="openForgot()" class="text-sm text-slate-500 hover:text-emerald-600">نسيت كلمة المرور؟</button></div>
+      <div><label class="text-sm">اسم المستخدم / البطاقة / الموبايل / العضوية</label><input id="loginUser" class="w-full mt-1 p-3 border rounded-xl" placeholder="breeze_admin أو رقم البطاقة"></div>
+      <div><label class="text-sm">كلمة المرور - آخر 7 أرقام من البطاقة للأعضاء</label><input id="loginPass" type="password" class="w-full mt-1 p-3 border rounded-xl" placeholder="••••"></div>
+      <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">تسجيل دخول</button>
+      <div class="text-center"><button onclick="openForgot()" class="text-sm text-slate-500">نسيت كلمة المرور؟ OTP بالموبايل</button></div>
       <div id="loginMsg" class="text-sm text-center text-red-500"></div>
+      <div class="bg-slate-50 p-3 rounded-xl text-xs space-y-1 mt-4">
+        <div class="font-bold">حسابات تجريبية (لو Supabase واقع):</div>
+        <div>Admin: breeze_admin / Breeze@2026 - كل الصلاحيات</div>
+        <div>Reception: reception / 1234 - تسجيل أعضاء وتجديد</div>
+        <div>Cashier: cashier / 1234 - تحصيل وريسيت</div>
+        <div>Security: security / 1234 - Face ID</div>
+        <div>Accounts: accounts / 1234 - التقارير المالية</div>
+        <div>Member: 29000000000000 / 0000000 (آخر 7 أرقام من البطاقة)</div>
+      </div>
     </div>
-    <div class="mt-6 pt-4 border-t text-xs text-slate-400 text-center">Breeze Venue v6.2 ULTIMATE - يعمل حتى بدون Supabase + ريسيت + دفع أونلاين</div>
   </div>
 </div>
 
 <div id="appPage" class="hidden min-h-screen bg-slate-50">
-  <header class="bg-slate-900 text-white p-4 flex justify-between items-center no-print"><div class="flex items-center gap-3"><div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold">B</div><span id="userRoleBadge" class="text-sm bg-white/20 px-2 py-1 rounded"></span></div><div class="flex items-center gap-3"><span id="userNameDisplay"></span><button onclick="logout()" class="bg-red-500 px-3 py-1 rounded-lg text-sm">خروج</button></div></header>
-  
+  <header class="bg-slate-900 text-white p-4 flex justify-between items-center no-print"><div class="flex items-center gap-3"><div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold">B</div><span id="userRoleBadge" class="text-xs bg-emerald-600 px-2 py-1 rounded"></span><span id="userNameDisplay" class="text-sm"></span></div><button onclick="logout()" class="bg-red-500 px-3 py-1 rounded-lg text-sm">خروج</button></header>
+
+  <!-- ADMIN - كل الصلاحيات -->
   <div id="adminPanel" class="hidden p-4">
-    <div class="flex gap-2 mb-4 flex-wrap no-print"><button onclick="showTab('reports')" class="tabBtn bg-emerald-600 text-white px-4 py-2 rounded-lg">التقارير الشهرية</button><button onclick="showTab('members')" class="tabBtn bg-white px-4 py-2 rounded-lg">الأعضاء</button><button onclick="showTab('payments')" class="tabBtn bg-white px-4 py-2 rounded-lg">المدفوعات</button><button onclick="showTab('settings')" class="tabBtn bg-white px-4 py-2 rounded-lg">الدفع الأونلاين</button></div>
-    <div id="tab-reports" class="tab">
+    <h2 class="font-bold text-xl mb-4">لوحة الأدمن - تحكم كامل</h2>
+    <div class="flex gap-2 mb-4 flex-wrap no-print"><button onclick="showTab('dash')" class="tabBtn bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm">الداشبورد</button><button onclick="showTab('users')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">إدارة المستخدمين</button><button onclick="showTab('members')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">إدارة الأعضاء</button><button onclick="showTab('plans')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">الخدمات والأسعار</button><button onclick="showTab('reports')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">كل التقارير</button><button onclick="showTab('finance')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">التقارير المالية</button><button onclick="showTab('news')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">الأخبار</button><button onclick="showTab('settings')" class="tabBtn bg-white border px-3 py-2 rounded-lg text-sm">إعدادات الدفع</button></div>
+
+    <div id="tab-dash" class="tab"><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="bg-white p-4 rounded-xl"><div class="text-xs">إجمالي الأعضاء</div><div id="dashMembers" class="text-2xl font-bold">0</div></div><div class="bg-white p-4 rounded-xl"><div class="text-xs">دخول اليوم</div><div id="dashToday" class="text-2xl font-bold">0</div></div><div class="bg-white p-4 rounded-xl"><div class="text-xs">إيراد الشهر</div><div id="dashRevenue" class="text-2xl font-bold">0 ج</div></div><div class="bg-white p-4 rounded-xl"><div class="text-xs">اشتراكات منتهية</div><div id="dashExpired" class="text-2xl font-bold">0</div></div></div></div>
+
+    <div id="tab-users" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">إضافة مستخدمين - Admin فقط</h3><div class="grid md:grid-cols-4 gap-2 mb-4"><input id="uName" placeholder="اسم المستخدم" class="p-2 border rounded-lg"><input id="uPass" placeholder="الباسورد" class="p-2 border rounded-lg"><select id="uRole" class="p-2 border rounded-lg"><option value="admin">أدمن - كل الصلاحيات</option><option value="reception">رسبشن - تسجيل وتجديد</option><option value="cashier">كاشير - تحصيل وريسيت</option><option value="security">أمن - Face ID</option><option value="accounts">حسابات - تقارير مالية</option></select><input id="uFull" placeholder="الاسم الكامل" class="p-2 border rounded-lg"></div><button onclick="addUser()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg">إضافة مستخدم</button><div id="usersList" class="mt-4 space-y-2"></div></div>
+
+    <div id="tab-members" class="tab hidden"><div class="bg-white p-4 rounded-xl"><div class="flex justify-between mb-3"><h3 class="font-bold">إدارة الأعضاء - بحث وتعديل وحذف</h3><input id="adminMemberSearch" oninput="renderAdminMembers()" placeholder="بحث بالاسم أو البطاقة أو الموبايل" class="p-2 border rounded-lg text-sm w-64"></div><div id="adminMembersList" class="space-y-2 max-h-96 overflow-auto"></div></div></div>
+
+    <div id="tab-plans" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">إدارة الخدمات والأسعار - Admin فقط</h3><div class="grid md:grid-cols-4 gap-2 mb-4"><input id="pName" placeholder="اسم الخدمة" class="p-2 border rounded-lg"><input id="pPrice" type="number" placeholder="السعر" class="p-2 border rounded-lg"><input id="pDuration" type="number" placeholder="المدة بالأيام" class="p-2 border rounded-lg"><button onclick="addPlan()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg">إضافة خدمة</button></div><div id="plansListAdmin"></div><div class="text-xs text-slate-500 mt-2">يمكنك تعديل السعر مباشرة بالضغط على السعر</div></div>
+
+    <div id="tab-reports" class="tab hidden">
       <div class="flex gap-2 mb-4 flex-wrap no-print"><button onclick="filterReports('thisMonth')" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm">هذا الشهر</button><button onclick="filterReports('lastMonth')" class="bg-white border px-3 py-2 rounded-lg text-sm">الشهر الماضي</button><button onclick="filterReports('last7')" class="bg-white border px-3 py-2 rounded-lg text-sm">آخر 7 أيام</button><button onclick="filterReports('today')" class="bg-white border px-3 py-2 rounded-lg text-sm">اليوم</button><input type="date" id="customFrom" class="p-2 border rounded-lg text-sm"><input type="date" id="customTo" class="p-2 border rounded-lg text-sm"><button onclick="filterReports('custom')" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-sm">تطبيق</button></div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs text-slate-500">إجمالي الدخول</div><div id="statTotal" class="text-2xl font-bold">0</div><div id="statByType" class="text-xs text-slate-400"></div></div><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs text-slate-500">أعضاء مختلفين</div><div id="statUnique" class="text-2xl font-bold">0</div><div id="statPercent" class="text-xs text-emerald-600"></div></div><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs text-slate-500">متوسط يومي</div><div id="statAvg" class="text-2xl font-bold">0</div></div><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs text-slate-500">أكثر يوم زحمة</div><div id="statBusy" class="text-sm font-bold">-</div></div></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs">إجمالي الدخول</div><div id="statTotal" class="text-2xl font-bold">0</div><div id="statByType" class="text-xs"></div></div><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs">أعضاء مختلفين</div><div id="statUnique" class="text-2xl font-bold">0</div><div id="statPercent" class="text-xs text-emerald-600"></div></div><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs">متوسط يومي</div><div id="statAvg" class="text-2xl font-bold">0</div></div><div class="bg-white p-4 rounded-xl shadow"><div class="text-xs">أكثر يوم زحمة</div><div id="statBusy" class="text-sm font-bold">-</div></div></div>
       <div class="bg-white p-4 rounded-xl shadow mb-6"><h3 class="font-bold mb-3">الدخول آخر 15 يوم</h3><div id="dailyBars" class="flex items-end gap-1 h-32"></div></div>
-      <div class="bg-white p-4 rounded-xl shadow mb-6"><h3 class="font-bold mb-3">Top 10 أكثر الأعضاء دخولا</h3><div id="top10" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div></div>
-      <div class="bg-white p-4 rounded-xl shadow"><div class="flex justify-between items-center mb-3 flex-wrap gap-2"><h3 class="font-bold">تفصيل دخول كل عضو <span id="reportPeriodLabel" class="text-xs text-slate-400"></span></h3><div class="flex gap-2"><input id="memberSearch" oninput="renderReports()" placeholder="بحث بالاسم" class="p-2 border rounded-lg text-sm"><button onclick="exportCSV()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm">تصدير CSV</button></div></div><div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">#</th><th class="p-2">الاسم</th><th class="p-2">العضوية</th><th class="p-2">الموبايل</th><th class="p-2">عدد الدخول</th><th class="p-2">آخر دخول</th><th class="p-2">الحالة</th></tr></thead><tbody id="reportTable"></tbody></table></div></div>
+      <div class="bg-white p-4 rounded-xl shadow mb-6"><h3 class="font-bold mb-3">Top 10 أكثر دخولا</h3><div id="top10" class="grid md:grid-cols-2 gap-2"></div></div>
+      <div class="bg-white p-4 rounded-xl shadow"><div class="flex justify-between mb-3 flex-wrap gap-2"><h3 class="font-bold">تفصيل كل عضو <span id="reportPeriodLabel" class="text-xs text-slate-400"></span></h3><div class="flex gap-2"><input id="memberSearch" oninput="renderReports()" placeholder="بحث" class="p-2 border rounded-lg text-sm"><button onclick="exportCSV()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm">CSV</button></div></div><div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">#</th><th class="p-2">الاسم</th><th class="p-2">العضوية</th><th class="p-2">الموبايل</th><th class="p-2">البطاقة</th><th class="p-2">عدد الدخول</th><th class="p-2">آخر دخول</th><th class="p-2">الحالة</th></tr></thead><tbody id="reportTable"></tbody></table></div></div>
     </div>
-    <div id="tab-members" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">الأعضاء - يوزر وباسورد</h3><div id="membersList" class="space-y-2"></div></div>
-    <div id="tab-payments" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">المدفوعات والريسيتات</h3><div id="paymentsList"></div></div>
-    <div id="tab-settings" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-4">إعدادات الدفع الأونلاين - فيزا / إنستا / محفظة</h3><div class="grid md:grid-cols-2 gap-4"><div><label class="text-sm">Paymob API Key (فيزا)</label><input id="paymobKey" class="w-full p-2 border rounded-lg" placeholder="sk_..."></div><div><label class="text-sm">InstaPay ID</label><input id="instaId" class="w-full p-2 border rounded-lg" placeholder="mostafa@instapay"></div><div><label class="text-sm">فودافون كاش</label><input id="vodafone" class="w-full p-2 border rounded-lg" placeholder="0109..."></div><div><label class="text-sm">اتصالات كاش</label><input id="etisalat" class="w-full p-2 border rounded-lg"></div><div class="flex items-center gap-2"><input type="checkbox" id="enableOnline"><label class="text-sm">تفعيل الدفع الأونلاين</label></div></div><button onclick="savePaySettings()" class="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg">حفظ الإعدادات</button><div class="mt-4 text-xs text-slate-500">للربط الحقيقي: Paymob للفيزا، و Webhook للتحقق من إنستا والمحافظ</div></div>
+
+    <div id="tab-finance" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">التقارير المالية - كل الإيرادات</h3><div class="grid md:grid-cols-4 gap-4 mb-6"><div class="bg-emerald-50 p-4 rounded-xl"><div class="text-xs">إجمالي الإيرادات</div><div id="finTotal" class="text-2xl font-bold">0 ج</div></div><div class="bg-blue-50 p-4 rounded-xl"><div class="text-xs">هذا الشهر</div><div id="finMonth" class="text-2xl font-bold">0 ج</div></div><div class="bg-yellow-50 p-4 rounded-xl"><div class="text-xs">كاش</div><div id="finCash" class="text-xl font-bold">0 ج</div></div><div class="bg-purple-50 p-4 rounded-xl"><div class="text-xs">أونلاين</div><div id="finOnline" class="text-xl font-bold">0 ج</div></div></div><div id="financeList"></div></div>
+
+    <div id="tab-news" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">إدارة الأخبار - Admin فقط</h3><div class="flex gap-2 mb-4"><input id="newsTitle" placeholder="عنوان الخبر" class="flex-1 p-2 border rounded-lg"><input id="newsBody" placeholder="تفاصيل الخبر" class="flex-1 p-2 border rounded-lg"><button onclick="addNews()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg">نشر</button></div><div id="newsListAdmin"></div></div>
+
+    <div id="tab-settings" class="tab hidden bg-white p-4 rounded-xl"><h3 class="font-bold mb-4">إعدادات الدفع الأونلاين</h3><div class="grid md:grid-cols-2 gap-4"><div><label class="text-sm">Paymob Key (فيزا)</label><input id="paymobKey" class="w-full p-2 border rounded-lg"></div><div><label class="text-sm">InstaPay ID</label><input id="instaId" class="w-full p-2 border rounded-lg"></div><div><label class="text-sm">فودافون كاش</label><input id="vodafone" class="w-full p-2 border rounded-lg"></div><div><label class="text-sm">اتصالات كاش</label><input id="etisalat" class="w-full p-2 border rounded-lg"></div><div class="flex items-center gap-2"><input type="checkbox" id="enableOnline"><label class="text-sm">تفعيل الأونلاين</label></div></div><button onclick="savePaySettings()" class="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg">حفظ</button></div>
   </div>
 
-  <div id="receptionPanel" class="hidden p-4"><div class="bg-white p-4 rounded-xl max-w-2xl mx-auto"><h3 class="font-bold mb-4">تسجيل عضو جديد - مع يوزر وباسورد</h3><div class="grid md:grid-cols-2 gap-3"><input id="mName" placeholder="الاسم الكامل" class="p-2 border rounded-lg"><input id="mPhone" placeholder="الموبايل" class="p-2 border rounded-lg"><input id="mNational" placeholder="الرقم القومي" class="p-2 border rounded-lg"><input id="mPass" placeholder="الباسورد (اختياري - آخر 4 أرقام)" class="p-2 border rounded-lg"><select id="mPlan" class="p-2 border rounded-lg"><option>جاري تحميل الباقات...</option></select></div><div class="mt-4"><video id="video" width="320" height="240" autoplay muted class="rounded-lg bg-black"></video><canvas id="canvas" class="hidden"></canvas><button onclick="captureFace()" class="mt-2 bg-slate-800 text-white px-3 py-1 rounded-lg text-sm">التقاط بصمة الوجه</button><span id="faceStatus" class="text-xs mr-2"></span></div><button onclick="saveMember()" class="mt-4 w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">حفظ العضو وإصدار يوزر وباسورد</button><div id="memberCreds" class="hidden mt-4 bg-emerald-50 p-3 rounded-lg text-sm"></div></div></div>
+  <!-- RECEPTION -->
+  <div id="receptionPanel" class="hidden p-4">
+    <h2 class="font-bold text-xl mb-4">الرسيبشن - تسجيل وتجديد واشتراكات</h2>
+    <div class="flex gap-2 mb-4 flex-wrap"><button onclick="showRecTab('search')" class="recTab bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm">بحث عن الأعضاء</button><button onclick="showRecTab('new')" class="recTab bg-white border px-3 py-2 rounded-lg text-sm">تسجيل عضو جديد</button><button onclick="showRecTab('renew')" class="recTab bg-white border px-3 py-2 rounded-lg text-sm">تجديد واشتراك خدمات</button></div>
+    <div id="rec-search" class="recTabContent bg-white p-4 rounded-xl"><input id="recSearchInput" oninput="searchMembers()" placeholder="ابحث بالاسم أو رقم البطاقة أو الموبايل أو العضوية" class="w-full p-3 border rounded-xl mb-3"><div id="recSearchResults" class="space-y-2"></div></div>
+    <div id="rec-new" class="recTabContent hidden bg-white p-4 rounded-xl max-w-2xl"><h3 class="font-bold mb-3">تسجيل عضو جديد - اليوزر برقم البطاقة والباسورد آخر 7 أرقام</h3><div class="grid md:grid-cols-2 gap-3"><input id="mName" placeholder="الاسم الكامل" class="p-2 border rounded-lg"><input id="mPhone" placeholder="الموبايل" class="p-2 border rounded-lg"><input id="mNational" placeholder="رقم البطاقة - 14 رقم" class="p-2 border rounded-lg"><input id="mNationalConfirm" placeholder="تأكيد رقم البطاقة" class="p-2 border rounded-lg"><select id="mPlan" class="p-2 border rounded-lg"><option>جاري تحميل الباقات...</option></select><input id="mFamily" placeholder="عدد أفراد الأسرة (اختياري)" class="p-2 border rounded-lg"></div><div class="mt-4"><video id="video" width="320" height="240" autoplay muted class="rounded-lg bg-black"></video><canvas id="canvas" class="hidden"></canvas><button onclick="captureFace()" class="mt-2 bg-slate-800 text-white px-3 py-1 rounded-lg text-sm">التقاط بصمة الوجه</button><span id="faceStatus" class="text-xs mr-2"></span></div><button onclick="saveMember()" class="mt-4 w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">حفظ العضو - إنشاء يوزر وباسورد تلقائي</button><div id="memberCreds" class="hidden mt-4 bg-emerald-50 p-3 rounded-lg text-sm border border-emerald-200"></div></div>
+    <div id="rec-renew" class="recTabContent hidden bg-white p-4 rounded-xl max-w-2xl"><h3 class="font-bold mb-3">تجديد العضوية واشتراك خدمات أخرى</h3><select id="renewMember" class="w-full p-2 border rounded-lg mb-3"></select><select id="renewPlan" class="w-full p-2 border rounded-lg mb-3"></select><div class="grid grid-cols-2 gap-2 mb-3"><label class="text-sm"><input type="checkbox" id="extraGym"> جيم إضافي</label><label class="text-sm"><input type="checkbox" id="extraPool"> حمام سباحة</label></div><button onclick="renewMembership()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">إتمام التجديد</button><div id="renewResult" class="mt-3 text-sm"></div></div>
+  </div>
 
-  <div id="securityPanel" class="hidden p-4"><div class="grid md:grid-cols-3 gap-4 mb-4"><div class="bg-white p-3 rounded-xl"><div class="text-xs">دخول اليوم</div><div id="sToday" class="text-xl font-bold">0</div></div><div class="bg-white p-3 rounded-xl"><div class="text-xs">مختلفين اليوم</div><div id="sUniqueToday" class="text-xl font-bold">0</div></div><div class="bg-white p-3 rounded-xl"><div class="text-xs">دخول الشهر</div><div id="sMonth" class="text-xl font-bold">0</div></div></div><div class="bg-white p-4 rounded-xl max-w-xl mx-auto text-center"><video id="secVideo" width="320" height="240" autoplay muted class="rounded-lg bg-black mx-auto"></video><canvas id="secCanvas" class="hidden"></canvas><button onclick="verifyFace()" class="mt-3 bg-emerald-600 text-white px-6 py-2 rounded-xl">فحص الوجه Face ID - دقة 0.45</button><div id="verifyResult" class="mt-4"></div></div></div>
+  <!-- CASHIER -->
+  <div id="cashierPanel" class="hidden p-4">
+    <h2 class="font-bold text-xl mb-4">الكاشير - تحصيل وريسيت وطباعة</h2>
+    <div class="bg-white p-4 rounded-xl max-w-2xl mx-auto"><select id="payMember" class="w-full p-2 border rounded-lg mb-3"></select><select id="payPlan" class="w-full p-2 border rounded-lg mb-3"></select><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"><button onclick="setPayMethod('cash')" class="payM bg-emerald-600 text-white p-2 rounded-lg text-sm">💵 كاش</button><button onclick="setPayMethod('visa')" class="payM bg-white border p-2 rounded-lg text-sm">💳 فيزا</button><button onclick="setPayMethod('instapay')" class="payM bg-white border p-2 rounded-lg text-sm">📱 إنستا</button><button onclick="setPayMethod('wallet')" class="payM bg-white border p-2 rounded-lg text-sm">👛 محفظة</button></div><div id="payMethodFields" class="mb-3 text-sm"></div><input id="payAmount" type="number" placeholder="المبلغ" class="w-full p-2 border rounded-lg mb-3"><input id="payTransId" placeholder="رقم العملية للأونلاين" class="w-full p-2 border rounded-lg mb-3"><button onclick="collectPayment()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">تحصيل وإصدار ريسيت وطباعة</button></div>
+  </div>
 
-  <div id="cashierPanel" class="hidden p-4"><div class="bg-white p-4 rounded-xl max-w-2xl mx-auto"><h3 class="font-bold mb-4">تحصيل - مع ريسيت و دفع أونلاين</h3><select id="payMember" class="w-full p-2 border rounded-lg mb-3"></select><select id="payPlan" class="w-full p-2 border rounded-lg mb-3"></select><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"><button onclick="setPayMethod('cash')" class="payM bg-emerald-600 text-white p-2 rounded-lg text-sm">💵 كاش</button><button onclick="setPayMethod('visa')" class="payM bg-white border p-2 rounded-lg text-sm">💳 فيزا</button><button onclick="setPayMethod('instapay')" class="payM bg-white border p-2 rounded-lg text-sm">📱 إنستا</button><button onclick="setPayMethod('wallet')" class="payM bg-white border p-2 rounded-lg text-sm">👛 محفظة</button></div><div id="payMethodFields" class="mb-3 text-sm"></div><input id="payAmount" type="number" placeholder="المبلغ" class="w-full p-2 border rounded-lg mb-3"><input id="payTransId" placeholder="رقم العملية (للأونلاين)" class="w-full p-2 border rounded-lg mb-3"><button onclick="collectPayment()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">تحصيل وإصدار إيصال</button></div></div>
+  <!-- SECURITY -->
+  <div id="securityPanel" class="hidden p-4">
+    <h2 class="font-bold text-xl mb-4">الأمن - التحقق Face ID وعرض كل البيانات</h2>
+    <div class="grid md:grid-cols-3 gap-4 mb-4"><div class="bg-white p-3 rounded-xl"><div class="text-xs">دخول اليوم</div><div id="sToday" class="text-xl font-bold">0</div></div><div class="bg-white p-3 rounded-xl"><div class="text-xs">مختلفين اليوم</div><div id="sUniqueToday" class="text-xl font-bold">0</div></div><div class="bg-white p-3 rounded-xl"><div class="text-xs">دخول الشهر</div><div id="sMonth" class="text-xl font-bold">0</div></div></div>
+    <div class="grid md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl text-center"><video id="secVideo" width="100%" height="240" autoplay muted class="rounded-lg bg-black mx-auto"></video><button onclick="verifyFace()" class="mt-3 w-full bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold">فحص الوجه Face ID - دقة 0.45</button></div><div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-2">نتيجة الفحص</h3><div id="verifyResult" class="text-sm">لم يتم الفحص بعد - سيظهر هنا كل بيانات العضو وجميع اشتراكاته</div><div id="memberFullData" class="mt-4 hidden border-t pt-4"></div></div></div>
+  </div>
 
-  <div id="memberPanel" class="hidden p-4"><div class="max-w-2xl mx-auto space-y-4"><div class="bg-white p-4 rounded-xl flex gap-4"><div class="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-2xl">👤</div><div><div id="memName" class="font-bold"></div><div id="memUser" class="text-sm text-slate-500"></div><div id="memExpiry" class="text-sm"></div><div id="memStatus" class="text-xs"></div></div><div class="mr-auto"><img id="memQR" class="w-20 h-20 border"></div></div><div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">تجديد الاشتراك أونلاين - فيزا / إنستا / محفظة</h3><select id="renewPlan" class="w-full p-2 border rounded-lg mb-3"></select><div class="grid grid-cols-4 gap-2 mb-3"><button onclick="setRenewMethod('cash')" class="rPayM bg-white border p-2 rounded-lg text-sm">كاش</button><button onclick="setRenewMethod('visa')" class="rPayM bg-emerald-600 text-white p-2 rounded-lg text-sm">فيزا</button><button onclick="setRenewMethod('instapay')" class="rPayM bg-white border p-2 rounded-lg text-sm">إنستا</button><button onclick="setRenewMethod('wallet')" class="rPayM bg-white border p-2 rounded-lg text-sm">محفظة</button></div><div id="renewFields" class="mb-3 text-sm"></div><button onclick="renewOnline()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">ادفع الآن</button></div><div class="bg-white p-4 rounded-xl"><h3 class="font-bold">سجل المدفوعات</h3><div id="memPayments"></div></div></div></div>
+  <!-- MEMBER -->
+  <div id="memberPanel" class="hidden p-4">
+    <div class="max-w-3xl mx-auto space-y-4">
+      <div class="bg-white p-4 rounded-xl flex gap-4"><div class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-2xl">👤</div><div class="flex-1"><div id="memName" class="font-bold text-lg"></div><div id="memUser" class="text-sm text-slate-500"></div><div id="memNational" class="text-xs text-slate-500"></div><div id="memPhone" class="text-xs"></div><div id="memExpiry" class="text-sm font-bold mt-1"></div><div id="memStatus" class="text-xs"></div></div><div class="text-center"><img id="memQR" class="w-24 h-24 border"><div class="text-xs mt-1">QR الدخول</div></div></div>
+      <div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-2">جميع اشتراكاتي والخدمات</h3><div id="memSubs" class="space-y-2 text-sm"></div></div>
+      <div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">الأخبار والخدمات الجديدة</h3><div id="memNews" class="space-y-2"></div></div>
+      <div class="bg-white p-4 rounded-xl"><h3 class="font-bold mb-3">الدفع أونلاين - فيزا / إنستا / محفظة</h3><select id="memberRenewPlan" class="w-full p-2 border rounded-lg mb-3"></select><div class="grid grid-cols-4 gap-2 mb-3"><button onclick="setRenewMethod('cash')" class="rPayM bg-white border p-2 rounded-lg text-sm">كاش</button><button onclick="setRenewMethod('visa')" class="rPayM bg-emerald-600 text-white p-2 rounded-lg text-sm">فيزا</button><button onclick="setRenewMethod('instapay')" class="rPayM bg-white border p-2 rounded-lg text-sm">إنستا</button><button onclick="setRenewMethod('wallet')" class="rPayM bg-white border p-2 rounded-lg text-sm">محفظة</button></div><div id="renewFields" class="mb-3"></div><button onclick="renewOnline()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold">ادفع الآن</button></div>
+      <div class="bg-white p-4 rounded-xl"><h3 class="font-bold">سجل مدفوعاتي</h3><div id="memPayments"></div></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS -->
+  <div id="accountsPanel" class="hidden p-4">
+    <h2 class="font-bold text-xl mb-4">الحسابات - كل التقارير المالية</h2>
+    <div class="grid md:grid-cols-4 gap-4 mb-6"><div class="bg-emerald-50 p-4 rounded-xl border"><div class="text-xs">إجمالي الإيرادات</div><div id="accTotal" class="text-2xl font-bold">0 ج</div></div><div class="bg-blue-50 p-4 rounded-xl border"><div class="text-xs">هذا الشهر</div><div id="accMonth" class="text-2xl font-bold">0 ج</div></div><div class="bg-yellow-50 p-4 rounded-xl border"><div class="text-xs">كاش</div><div id="accCash" class="text-xl font-bold">0 ج</div></div><div class="bg-purple-50 p-4 rounded-xl border"><div class="text-xs">أونلاين</div><div id="accOnline" class="text-xl font-bold">0 ج</div></div></div>
+    <div class="bg-white p-4 rounded-xl"><div class="flex justify-between mb-3"><h3 class="font-bold">تفصيل الإيرادات حسب الخدمة وطريقة الدفع</h3><button onclick="exportFinanceCSV()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm">تصدير مالي CSV</button></div><div id="accountsList"></div></div>
+  </div>
 </div>
 
 <!-- OTP Modal -->
-<div id="otpModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl p-6 w-full max-w-md"><div id="otpStep1"><h3 class="font-bold mb-3">نسيت كلمة المرور - OTP</h3><input id="otpPhone" placeholder="رقم الموبايل المسجل" class="w-full p-3 border rounded-xl mb-3"><button onclick="sendOTP()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">إرسال كود التحقق</button><div id="otpMsg1" class="text-sm mt-2 text-center text-red-500"></div></div><div id="otpStep2" class="hidden"><h3 class="font-bold mb-2">أدخل كود التحقق</h3><div class="text-xs text-slate-500 mb-2">تم إرسال كود إلى <span id="otpPhoneDisplay"></span></div><div class="bg-yellow-50 p-2 rounded-lg text-sm mb-3 border">كود تجريبي: <b id="demoOTP" class="text-lg"></b> (يظهر للتجربة - في الإنتاج يرسل SMS)</div><input id="otpCode" maxlength="6" placeholder="123456" class="w-full p-3 border rounded-xl text-center text-xl tracking-widest mb-3"><div class="flex justify-between text-xs mb-3"><span id="otpTimer">05:00</span><button onclick="sendOTP()" class="text-emerald-600">إعادة إرسال</button></div><button onclick="verifyOTP()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">تحقق</button><div id="otpMsg2" class="text-sm mt-2 text-center text-red-500"></div></div><div id="otpStep3" class="hidden"><h3 class="font-bold mb-3">كلمة مرور جديدة</h3><input id="newPass" type="password" placeholder="الجديدة" class="w-full p-3 border rounded-xl mb-3"><input id="confirmPass" type="password" placeholder="تأكيد" class="w-full p-3 border rounded-xl mb-3"><button onclick="saveNewPass()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">حفظ</button><div id="otpMsg3" class="text-sm mt-2 text-center"></div></div><button onclick="closeOTP()" class="w-full mt-3 bg-slate-100 p-2 rounded-xl text-sm">إغلاق</button></div></div>
+<div id="otpModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl p-6 w-full max-w-md"><div id="otpStep1"><h3 class="font-bold mb-3">نسيت كلمة المرور - OTP بالموبايل</h3><input id="otpPhone" placeholder="رقم الموبايل المسجل" class="w-full p-3 border rounded-xl mb-3"><button onclick="sendOTP()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">إرسال كود</button><div id="otpMsg1" class="text-sm mt-2 text-center text-red-500"></div></div><div id="otpStep2" class="hidden"><h3 class="font-bold mb-2">أدخل الكود</h3><div class="bg-yellow-50 p-2 rounded-lg text-sm mb-3">كود تجريبي: <b id="demoOTP" class="text-lg"></b> - في الإنتاج SMS</div><input id="otpCode" maxlength="6" placeholder="123456" class="w-full p-3 border rounded-xl text-center text-xl tracking-widest mb-3"><div class="flex justify-between text-xs mb-3"><span id="otpTimer">05:00</span><button onclick="sendOTP()" class="text-emerald-600">إعادة</button></div><button onclick="verifyOTP()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">تحقق</button><div id="otpMsg2" class="text-sm mt-2 text-center text-red-500"></div></div><div id="otpStep3" class="hidden"><h3 class="font-bold mb-3">باسورد جديد</h3><input id="newPass" type="password" placeholder="جديد" class="w-full p-3 border rounded-xl mb-3"><input id="confirmPass" type="password" placeholder="تأكيد" class="w-full p-3 border rounded-xl mb-3"><button onclick="saveNewPass()" class="w-full bg-emerald-600 text-white p-3 rounded-xl">حفظ</button><div id="otpMsg3" class="text-sm mt-2 text-center"></div></div><button onclick="closeOTP()" class="w-full mt-3 bg-slate-100 p-2 rounded-xl text-sm">إغلاق</button></div></div>
 
-<!-- Receipt Modal -->
-<div id="receiptModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto"><div id="receiptContent" class="border-2 border-dashed border-slate-300 p-4 rounded-xl"><div class="text-center mb-4"><div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center mx-auto font-bold text-xl">B</div><h2 class="font-bold mt-2">Breeze Venue Club</h2><p class="text-xs text-slate-500">إيصال دفع رسمي</p></div><div class="text-sm space-y-2"><div class="flex justify-between"><span>رقم الإيصال:</span><b id="rNo"></b></div><div class="flex justify-between"><span>التاريخ:</span><span id="rDate"></span></div><hr><div>العضو: <b id="rMember"></b> (<span id="rUsername"></span>)</div><div>الموبايل: <span id="rPhone"></span></div><div>الباقة: <b id="rPlan"></b></div><div class="flex justify-between"><span>المبلغ:</span><b><span id="rAmount"></span> جنيه</b></div><div class="flex justify-between"><span>طريقة الدفع:</span><span id="rMethod" class="font-bold"></span></div><div class="flex justify-between"><span>رقم العملية:</span><span id="rTrans" class="text-xs"></span></div><div class="flex justify-between"><span>صالح حتى:</span><span id="rExpiry" class="font-bold"></span></div><div class="text-center mt-3"><img id="rQR" class="w-24 h-24 mx-auto border"></div><div class="text-center text-xs text-slate-500 mt-3">شكرا لاشتراككم - 01092101182</div></div></div><div class="flex gap-2 mt-4"><button onclick="downloadReceipt()" class="flex-1 bg-emerald-600 text-white p-3 rounded-xl text-sm font-bold">تحميل كصورة PNG</button><button onclick="closeReceipt()" class="flex-1 bg-slate-100 p-3 rounded-xl text-sm">إغلاق</button></div><div class="text-xs text-center mt-2 text-slate-400">للطباعة استخدم قائمة المتصفح - التصميم مهيأ للطباعة</div></div></div>
+<!-- Receipt -->
+<div id="receiptModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"><div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto"><div id="receiptContent" class="border-2 border-dashed border-slate-300 p-4 rounded-xl"><div class="text-center mb-4"><div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center mx-auto font-bold text-xl">B</div><h2 class="font-bold mt-2">Breeze Venue Club - إيصال رسمي</h2><p class="text-xs text-slate-500">نظام إدارة نادي Breeze Venue</p></div><div class="text-sm space-y-2"><div class="flex justify-between"><span>رقم الإيصال:</span><b id="rNo"></b></div><div class="flex justify-between"><span>التاريخ:</span><span id="rDate"></span></div><hr><div>العضو: <b id="rMember"></b> (<span id="rUsername"></span>)</div><div>البطاقة: <span id="rNational"></span></div><div>الموبايل: <span id="rPhone"></span></div><div>الخدمة: <b id="rPlan"></b></div><div class="flex justify-between"><span>المبلغ:</span><b><span id="rAmount"></span> جنيه</b></div><div class="flex justify-between"><span>طريقة الدفع:</span><span id="rMethod" class="font-bold"></span></div><div class="flex justify-between"><span>رقم العملية:</span><span id="rTrans" class="text-xs"></span></div><div class="flex justify-between"><span>صالح حتى:</span><span id="rExpiry" class="font-bold text-emerald-700"></span></div><div class="text-center mt-3"><img id="rQR" class="w-24 h-24 mx-auto border"></div><div class="text-center text-xs text-slate-500 mt-3">شكرا لاشتراككم - Breeze Venue<br>للاستفسار: 01092101182</div></div></div><div class="flex gap-2 mt-4"><button onclick="downloadReceipt()" class="flex-1 bg-emerald-600 text-white p-3 rounded-xl text-sm font-bold">تحميل PNG</button><button onclick="printReceipt()" class="flex-1 bg-slate-800 text-white p-3 rounded-xl text-sm font-bold">طباعة الريسيت</button><button onclick="closeReceipt()" class="flex-1 bg-slate-100 p-3 rounded-xl text-sm">إغلاق</button></div></div></div>
 
 <script>
 const SUPABASE_URL='https://yhtvopvzxqitxhkcvjuh.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlodHZvcHZ6eHFpdHhoa2N2anVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4OTQzMTUsImV4cCI6MjA3MjQ3MDMxNX0.n2x2Y2A2ijS2Zb0-6G5K9bw9p2l9u2c2l2Y2A2ijS2Zb';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlodHZvcHZ6eHFpdHhoa2N2anVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyNjI0NTMsImV4cCI6MjA2MDgzODQ1M30.n2x2Y2A2ijS2Zb0-6G5K9bw9p2l9u2c2l2Y2A2ijS2Zb';
 const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
-
-// OFFLINE FALLBACK - لو Supabase واقع
-const OFFLINE_USERS = [
-  {username:'breeze_admin', password:'Breeze@2026', role:'admin', full_name:'Admin'},
-  {username:'reception', password:'1234', role:'reception', full_name:'Reception'},
-  {username:'security', password:'1234', role:'security', full_name:'Security'},
-  {username:'cashier', password:'1234', role:'cashier', full_name:'Cashier'},
-];
-const OFFLINE_MEMBERS = [
-  {id:'demo-1', username:'BZ-1001', phone:'01092101182', national_id:'29000000000000', password:'1182', full_name:'عضو تجريبي', status:'active', expiry_date:'2026-12-31'}
-];
-
-async function sbSelectSafe(t,f){
-  try{
-    let u=SUPABASE_URL+'/rest/v1/'+t;if(f)u+='?'+f;
-    let r=await fetch(u,{headers, signal: AbortSignal.timeout(5000)});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return await r.json();
-  }catch(e){
-    console.warn('Supabase failed, using offline', e);
-    if(t==='users') return OFFLINE_USERS;
-    if(t==='breeze_members') return OFFLINE_MEMBERS;
-    if(t==='breeze_plans') return [{id:'1', name:'شهرية', price:300, duration_days:30}];
-    if(t==='breeze_entries') return JSON.parse(localStorage.getItem('offline_entries')||'[]');
-    if(t==='breeze_payments') return JSON.parse(localStorage.getItem('offline_payments')||'[]');
-    return [];
-  }
-}
-
+const OFFLINE_USERS=[{username:'breeze_admin',password:'Breeze@2026',role:'admin',full_name:'Admin - كل الصلاحيات'},{username:'reception',password:'1234',role:'reception',full_name:'Reception'},{username:'cashier',password:'1234',role:'cashier',full_name:'Cashier'},{username:'security',password:'1234',role:'security',full_name:'Security'},{username:'accounts',password:'1234',role:'accounts',full_name:'الحسابات'}];
+const OFFLINE_MEMBERS=[{id:'demo-1',username:'BZ-1001',phone:'01092101182',national_id:'29000000000000',password:'0000000',full_name:'عضو تجريبي',status:'active',expiry_date:'2026-12-31',family_members:[]}];
+async function sbSelectSafe(t,f){try{let u=SUPABASE_URL+'/rest/v1/'+t;if(f)u+='?'+f;let r=await fetch(u,{headers, signal: AbortSignal.timeout(5000)});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}catch(e){if(t==='users')return OFFLINE_USERS;if(t==='breeze_members')return OFFLINE_MEMBERS;if(t==='breeze_plans')return [{id:'1',name:'شهرية - جيم',price:300,duration_days:30},{id:'2',name:'سباحة',price:200,duration_days:30}];if(t==='breeze_news')return JSON.parse(localStorage.getItem('offline_news')||'[]');if(t==='breeze_entries')return JSON.parse(localStorage.getItem('offline_entries')||'[]');if(t==='breeze_payments')return JSON.parse(localStorage.getItem('offline_payments')||'[]');return []}}
 async function sbSelect(t,f){return sbSelectSafe(t,f)}
-async function sbInsert(t,d){
-  try{
-    let r=await fetch(SUPABASE_URL+'/rest/v1/'+t,{method:'POST',headers:{...headers,'Prefer':'return=representation'},body:JSON.stringify(d), signal: AbortSignal.timeout(5000)});
-    if(r.ok) return await r.json();
-    throw new Error('insert failed');
-  }catch(e){
-    console.warn('offline insert', t, d);
-    if(t==='breeze_entries'){let arr=JSON.parse(localStorage.getItem('offline_entries')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_entries',JSON.stringify(arr));return [d]}
-    if(t==='breeze_payments'){let arr=JSON.parse(localStorage.getItem('offline_payments')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_payments',JSON.stringify(arr));return [d]}
-    if(t==='breeze_members'){let arr=OFFLINE_MEMBERS;arr.push({...d,id:Date.now().toString()});return [d]}
-    return [d];
-  }
-}
-async function sbUpdate(t,id,d){
-  try{
-    let r=await fetch(SUPABASE_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers,body:JSON.stringify(d), signal: AbortSignal.timeout(5000)});
-    return r.ok;
-  }catch(e){
-    console.warn('offline update', t, id, d);
-    if(t==='breeze_members'){let m=OFFLINE_MEMBERS.find(x=>x.id===id);if(m)Object.assign(m,d);return true}
-    return true;
-  }
-}
-let currentUser=null,members=[],plans=[],entries=[],payments=[],faceDescriptor=null,otpData=null,payMethod='cash',renewMethod='visa',filterFrom=null,filterTo=null;
+async function sbInsert(t,d){try{let r=await fetch(SUPABASE_URL+'/rest/v1/'+t,{method:'POST',headers:{...headers,'Prefer':'return=representation'},body:JSON.stringify(d), signal: AbortSignal.timeout(5000)});if(r.ok)return await r.json();throw new Error('insert failed');}catch(e){if(t==='breeze_entries'){let arr=JSON.parse(localStorage.getItem('offline_entries')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_entries',JSON.stringify(arr));return [d]}if(t==='breeze_payments'){let arr=JSON.parse(localStorage.getItem('offline_payments')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_payments',JSON.stringify(arr));return [d]}if(t==='breeze_members'){OFFLINE_MEMBERS.push({...d,id:Date.now().toString()});return [d]}if(t==='users'){OFFLINE_USERS.push({...d,id:Date.now().toString()});return [d]}if(t==='breeze_plans'){return [d]}if(t==='breeze_news'){let arr=JSON.parse(localStorage.getItem('offline_news')||'[]');arr.push({...d,id:Date.now().toString(),created_at:new Date().toISOString()});localStorage.setItem('offline_news',JSON.stringify(arr));return [d]}return [d]}}
+async function sbUpdate(t,id,d){try{let r=await fetch(SUPABASE_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers,body:JSON.stringify(d), signal: AbortSignal.timeout(5000)});return r.ok;}catch(e){return true}}
+async function sbDelete(t,id){try{let r=await fetch(SUPABASE_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers, signal: AbortSignal.timeout(5000)});return r.ok;}catch(e){return true}}
+
+let currentUser=null,members=[],plans=[],entries=[],payments=[],news=[],usersList=[],faceDescriptor=null,otpData=null,payMethod='cash',renewMethod='visa',filterFrom=null,filterTo=null;
 
 async function handleLogin(){
   let u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value.trim();
@@ -120,93 +130,148 @@ async function handleLogin(){
   if(!u||!p){msg.innerText='ادخل البيانات';return}
   msg.innerText='جاري...';
   try{
-    // جرب اليوزرات أولا - بحث شامل بدون فلتر عشان RLS
     let users=await sbSelect('users','');
-    let user=users.find(x=> (x.username||'').toLowerCase()===u.toLowerCase() && (x.password===p || x.password_hash===p));
+    let user=users.find(x=> (x.username||'').toLowerCase()===u.toLowerCase() && (x.password===p));
     if(user){currentUser={id:user.id,username:user.username,role:user.role,full_name:user.full_name||user.username};showApp();return}
-    // جرب الأعضاء - بحث شامل client side
     let allMembers=await sbSelect('breeze_members','');
+    // للأعضاء: اليوزر رقم البطاقة والباسورد آخر 7 أرقام
     let mem=allMembers.find(x=> ((x.username||'').toLowerCase()===u.toLowerCase() || (x.phone||'')===u || (x.national_id||'')===u || (x.full_name||'').toLowerCase().includes(u.toLowerCase())) && (x.password===p));
     if(mem){currentUser={id:mem.id,username:mem.username,role:'member',full_name:mem.full_name,memberData:mem};showApp();return}
-    // جرب كمان بفلتر ilike للاحتياط
-    let m1=await sbSelect('breeze_members','username=ilike.*'+encodeURIComponent(u)+'*');
-    let m2=m1.find(x=>x.password===p);
-    if(m2){currentUser={id:m2.id,username:m2.username,role:'member',full_name:m2.full_name,memberData:m2};showApp();return}
-    msg.innerText='بيانات خاطئة - تأكد من اليوزر والباسورد. اليوزر: '+u;
-  }catch(e){msg.innerText='خطأ اتصال: '+e.message+' - تأكد من Supabase RLS معطل';console.error(e)}
+    // جرب كمان آخر 7 أرقام من البطاقة كـ باسورد
+    let memByNational=allMembers.find(x=> (x.national_id||'')===u && (x.national_id||'').slice(-7)===p);
+    if(memByNational){currentUser={id:memByNational.id,username:memByNational.username,role:'member',full_name:memByNational.full_name,memberData:memByNational};showApp();return}
+    msg.innerText='بيانات خاطئة - Admin: breeze_admin / Breeze@2026 - عضو: رقم البطاقة / آخر 7 أرقام';
+  }catch(e){msg.innerText='خطأ: '+e.message}
 }
 function showApp(){
   document.getElementById('loginPage').classList.add('hidden');document.getElementById('appPage').classList.remove('hidden');
-  document.getElementById('userNameDisplay').innerText=currentUser.full_name;document.getElementById('userRoleBadge').innerText=currentUser.role;
-  if(currentUser.role==='admin')document.getElementById('adminPanel').classList.remove('hidden');
-  if(currentUser.role==='reception')document.getElementById('receptionPanel').classList.remove('hidden');
-  if(currentUser.role==='security')document.getElementById('securityPanel').classList.remove('hidden');
-  if(currentUser.role==='cashier')document.getElementById('cashierPanel').classList.remove('hidden');
-  if(currentUser.role==='member')document.getElementById('memberPanel').classList.remove('hidden');
+  document.getElementById('userNameDisplay').innerText=currentUser.full_name;document.getElementById('userRoleBadge').innerText={admin:'أدمن - كل الصلاحيات',reception:'رسبشن',cashier:'كاشير',security:'أمن',member:'عضو',accounts:'حسابات'}[currentUser.role]||currentUser.role;
+  document.getElementById('adminPanel').classList.toggle('hidden',currentUser.role!=='admin');
+  document.getElementById('receptionPanel').classList.toggle('hidden',currentUser.role!=='reception' && currentUser.role!=='admin');
+  document.getElementById('cashierPanel').classList.toggle('hidden',currentUser.role!=='cashier' && currentUser.role!=='admin');
+  document.getElementById('securityPanel').classList.toggle('hidden',currentUser.role!=='security' && currentUser.role!=='admin');
+  document.getElementById('memberPanel').classList.toggle('hidden',currentUser.role!=='member');
+  document.getElementById('accountsPanel').classList.toggle('hidden',currentUser.role!=='accounts' && currentUser.role!=='admin');
   loadData();startVideo('video');startVideo('secVideo');
 }
 function logout(){location.reload()}
-function showTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));document.getElementById('tab-'+t).classList.remove('hidden')}
+function showTab(t){document.querySelectorAll('#adminPanel .tab').forEach(x=>x.classList.add('hidden'));document.getElementById('tab-'+t).classList.remove('hidden');if(t==='finance')renderFinance();if(t==='reports')filterReports('thisMonth')}
+function showRecTab(t){document.querySelectorAll('.recTabContent').forEach(x=>x.classList.add('hidden'));document.getElementById('rec-'+t).classList.remove('hidden')}
 
 async function loadData(){
-  members=await sbSelect('breeze_members','');plans=await sbSelect('breeze_plans','');entries=await sbSelect('breeze_entries','order=created_at.desc');payments=await sbSelect('breeze_payments','order=created_at.desc');
-  document.getElementById('membersList').innerHTML=members.map(m=>`<div class="flex justify-between p-2 border rounded-lg text-sm"><span>${m.full_name} ${m.username||''}</span><span class="text-xs">${m.phone||''} | باس: ${m.password||''} | ${m.status||''}</span></div>`).join('')||'لا يوجد أعضاء';
-  document.getElementById('paymentsList').innerHTML=payments.map(p=>`<div class="p-2 border rounded-lg text-sm flex justify-between"><span>${p.amount}ج - ${p.payment_method||'cash'} - ${p.transaction_id||''}</span><span class="text-xs">${p.created_at?.slice(0,10)}</span></div>`).join('');
+  usersList=await sbSelect('users','');members=await sbSelect('breeze_members','');plans=await sbSelect('breeze_plans','');entries=await sbSelect('breeze_entries','order=created_at.desc');payments=await sbSelect('breeze_payments','order=created_at.desc');news=await sbSelect('breeze_news','order=created_at.desc');
+  // Admin users
+  document.getElementById('usersList').innerHTML=usersList.map(u=>`<div class="flex justify-between p-2 border rounded-lg text-sm"><span>${u.username} - ${u.role} - ${u.full_name}</span><button onclick="deleteUser('${u.id}')" class="text-red-500 text-xs">حذف</button></div>`).join('');
+  // Admin members
+  renderAdminMembers();
+  // Plans
+  document.getElementById('plansListAdmin').innerHTML=plans.map(p=>`<div class="flex justify-between p-2 border rounded-lg text-sm"><span>${p.name}</span><span><input value="${p.price}" onchange="updatePlanPrice('${p.id}',this.value)" class="w-20 p-1 border rounded"> ج - ${p.duration_days} يوم</span><button onclick="deletePlan('${p.id}')" class="text-red-500 text-xs">حذف</button></div>`).join('');
   let opts=plans.map(pl=>`<option value="${pl.id}">${pl.name} - ${pl.price}ج</option>`).join('');
-  document.getElementById('mPlan').innerHTML='<option value="">اختر الباقة</option>'+opts;
-  document.getElementById('payPlan').innerHTML=opts;document.getElementById('renewPlan').innerHTML=opts;
-  document.getElementById('payMember').innerHTML=members.map(m=>`<option value="${m.id}">${m.full_name} - ${m.phone}</option>`).join('');
-  filterReports('thisMonth');updateSecurityStats();
-  if(currentUser.role==='member'){let m=currentUser.memberData;document.getElementById('memName').innerText=m.full_name;document.getElementById('memUser').innerText=m.username;document.getElementById('memExpiry').innerText='صالح حتى: '+(m.expiry_date||'-');document.getElementById('memStatus').innerText=m.status;document.getElementById('memQR').src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+m.username;document.getElementById('memPayments').innerHTML=payments.filter(p=>p.member_id===m.id).map(p=>`<div class="text-sm border-b py-1 flex justify-between"><span>${p.amount}ج - ${p.payment_method}</span><span class="text-xs">${p.created_at?.slice(0,10)}</span></div>`).join('')}
+  document.getElementById('mPlan').innerHTML='<option value="">اختر الخدمة</option>'+opts;
+  document.getElementById('payPlan').innerHTML=opts;document.getElementById('renewPlan').innerHTML=opts;document.getElementById('memberRenewPlan').innerHTML=opts;
+  document.getElementById('payMember').innerHTML=members.map(m=>`<option value="${m.id}">${m.full_name} - ${m.phone} - ${m.national_id||''}</option>`).join('');
+  document.getElementById('renewMember').innerHTML=members.map(m=>`<option value="${m.id}">${m.full_name} - ${m.national_id}</option>`).join('');
+  document.getElementById('newsListAdmin').innerHTML=news.map(n=>`<div class="p-2 border rounded-lg text-sm"><b>${n.title}</b> - ${n.body} <span class="text-xs text-slate-400">${n.created_at?.slice(0,10)}</span></div>`).join('');
+  // Dash
+  document.getElementById('dashMembers').innerText=members.length;document.getElementById('dashToday').innerText=entries.filter(e=>new Date(e.created_at).toDateString()===new Date().toDateString()).length;document.getElementById('dashRevenue').innerText=payments.filter(p=>new Date(p.created_at).getMonth()===new Date().getMonth()).reduce((s,p)=>s+parseFloat(p.amount||0),0)+' ج';document.getElementById('dashExpired').innerText=members.filter(m=>new Date(m.expiry_date)<new Date()).length;
+  filterReports('thisMonth');updateSecurityStats();renderFinance();
+  if(currentUser.role==='member'){let m=currentUser.memberData;document.getElementById('memName').innerText=m.full_name;document.getElementById('memUser').innerText='عضوية: '+m.username;document.getElementById('memNational').innerText='بطاقة: '+(m.national_id||'-');document.getElementById('memPhone').innerText='موبايل: '+(m.phone||'-');document.getElementById('memExpiry').innerText='صالح حتى: '+(m.expiry_date||'-');document.getElementById('memStatus').innerHTML='<span class="px-2 py-1 rounded text-xs '+(m.status==='active'?'bg-green-100 text-green-700':'bg-red-100')+'">'+(m.status||'')+'</span>';document.getElementById('memQR').src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+m.username;document.getElementById('memSubs').innerHTML=plans.filter(p=>p.id===m.plan_id).map(p=>`<div class="p-2 border rounded-lg">${p.name} - ${p.price}ج - ${p.duration_days} يوم</div>`).join('')||'لا يوجد اشتراك حالي';document.getElementById('memNews').innerHTML=news.map(n=>`<div class="p-2 bg-emerald-50 rounded-lg"><b>${n.title}</b><div class="text-xs">${n.body}</div></div>`).join('')||'لا يوجد أخبار';document.getElementById('memPayments').innerHTML=payments.filter(p=>p.member_id===m.id).map(p=>`<div class="text-sm border-b py-1 flex justify-between"><span>${p.amount}ج - ${p.payment_method} - ${p.plan_name}</span><span class="text-xs">${p.created_at?.slice(0,10)}</span></div>`).join('')}
 }
 
-function filterReports(type){
-  let now=new Date(),from,to;
-  if(type==='thisMonth'){from=new Date(now.getFullYear(),now.getMonth(),1);to=new Date()}
-  if(type==='lastMonth'){from=new Date(now.getFullYear(),now.getMonth()-1,1);to=new Date(now.getFullYear(),now.getMonth(),0)}
-  if(type==='last7'){from=new Date(Date.now()-7*86400000);to=new Date()}
-  if(type==='today'){from=new Date();from.setHours(0,0,0,0);to=new Date()}
-  if(type==='custom'){let f=document.getElementById('customFrom').value,t=document.getElementById('customTo').value;if(!f||!t)return;from=new Date(f);to=new Date(t)}
-  filterFrom=from;filterTo=to;document.getElementById('reportPeriodLabel').innerText=from.toLocaleDateString('ar-EG')+' - '+to.toLocaleDateString('ar-EG');renderReports();
+function renderAdminMembers(){
+  let search=(document.getElementById('adminMemberSearch')?.value||'').toLowerCase();
+  let list=members.filter(m=>!search||m.full_name.toLowerCase().includes(search)||(m.national_id||'').includes(search)||(m.phone||'').includes(search)||(m.username||'').toLowerCase().includes(search));
+  document.getElementById('adminMembersList').innerHTML=list.map(m=>`<div class="flex justify-between items-center p-2 border rounded-lg text-sm"><div><b>${m.full_name}</b> - ${m.username} - بطاقة: ${m.national_id||''} - موبايل: ${m.phone} - باسورد: ${m.password} (آخر 7 من البطاقة)</div><div class="flex gap-2"><button onclick="editMember('${m.id}')" class="text-blue-500 text-xs">تعديل</button><button onclick="deleteMember('${m.id}')" class="text-red-500 text-xs">حذف</button></div></div>`).join('');
 }
-function renderReports(){
-  if(!filterFrom)return;let filtered=entries.filter(e=>{let d=new Date(e.created_at);return d>=filterFrom&&d<=filterTo});
-  document.getElementById('statTotal').innerText=filtered.length;
-  let uniq=new Set(filtered.map(e=>e.member_id));document.getElementById('statUnique').innerText=uniq.size;
-  document.getElementById('statPercent').innerText=members.length?Math.round(uniq.size/members.length*100)+'% من الأعضاء':'';
-  let days=Math.max(1,Math.ceil((filterTo-filterFrom)/86400000));document.getElementById('statAvg').innerText=(filtered.length/days).toFixed(1);
-  let byDay={};filtered.forEach(e=>{let k=new Date(e.created_at).toLocaleDateString('ar-EG');byDay[k]=(byDay[k]||0)+1});let busy=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0];document.getElementById('statBusy').innerText=busy?busy[0]+' ('+busy[1]+')':'-';
-  let typeCount={};filtered.forEach(e=>{typeCount[e.entry_type]=(typeCount[e.entry_type]||0)+1});document.getElementById('statByType').innerText=Object.entries(typeCount).map(x=>x[0]+':'+x[1]).join(' ');
-  let dailyDiv=document.getElementById('dailyBars');let last15=[];for(let i=14;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let k=d.toLocaleDateString('ar-EG');last15.push({d:k,c:byDay[k]||0})}let max=Math.max(1,...last15.map(x=>x.c));dailyDiv.innerHTML=last15.map(x=>`<div class="flex-1 flex flex-col items-center"><div class="w-full bg-emerald-500 rounded-t" style="height:${x.c/max*90+10}px"></div><div class="text-[8px] mt-1">${x.d.slice(0,5)}</div></div>`).join('');
-  let byMem={};filtered.forEach(e=>{byMem[e.member_id]=(byMem[e.member_id]||0)+1});let sorted=Object.entries(byMem).sort((a,b)=>b[1]-a[1]).slice(0,10);document.getElementById('top10').innerHTML=sorted.map(([id,c],i)=>{let m=members.find(x=>x.id===id);return `<div class="flex justify-between p-2 border rounded-lg ${i<3?'bg-yellow-50 border-yellow-200':''}"><span>${i+1}. ${m?.full_name||id.slice(0,8)}</span><span class="bg-emerald-600 text-white px-2 rounded-full text-xs">${c} دخول</span></div>`}).join('');
-  let search=document.getElementById('memberSearch').value.toLowerCase();
-  let tableData=members.map(m=>{let cnt=byMem[m.id]||0;let last=filtered.filter(e=>e.member_id===m.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];return {...m,cnt,last:last?.created_at}}).filter(m=>!search||m.full_name.toLowerCase().includes(search)||m.username?.toLowerCase().includes(search)).sort((a,b)=>b.cnt-a.cnt);
-  document.getElementById('reportTable').innerHTML=tableData.map((m,i)=>`<tr class="border-b hover:bg-slate-50"><td class="p-2">${i+1}</td><td class="p-2">${m.full_name}</td><td class="p-2">${m.username||''}</td><td class="p-2">${m.phone||''}</td><td class="p-2 font-bold text-emerald-700">${m.cnt}</td><td class="p-2 text-xs">${m.last?new Date(m.last).toLocaleString('ar-EG'):''}</td><td class="p-2"><span class="text-xs px-2 py-1 rounded ${m.status==='active'?'bg-green-100 text-green-700':'bg-red-100'}">${m.status||''}</span></td></tr>`).join('');
-}
-function exportCSV(){let rows=[['الاسم','رقم العضوية','الموبايل','عدد الدخول','آخر دخول']];document.querySelectorAll('#reportTable tr').forEach(tr=>{let tds=tr.querySelectorAll('td');if(tds.length)rows.push([tds[1].innerText,tds[2].innerText,tds[3].innerText,tds[4].innerText,tds[5].innerText])});let csv=rows.map(r=>r.join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='report-'+new Date().toISOString().slice(0,10)+'.csv';a.click()}
+
+async function addUser(){let u=document.getElementById('uName').value,p=document.getElementById('uPass').value,r=document.getElementById('uRole').value,f=document.getElementById('uFull').value;if(!u||!p)return alert('ادخل البيانات');await sbInsert('users',{username:u,password:p,role:r,full_name:f});alert('تم إضافة المستخدم');loadData()}
+async function deleteUser(id){if(confirm('حذف؟')){await sbDelete('users',id);loadData()}}
+async function addPlan(){let n=document.getElementById('pName').value,pr=document.getElementById('pPrice').value,du=document.getElementById('pDuration').value;if(!n||!pr)return;await sbInsert('breeze_plans',{name:n,price:parseFloat(pr),duration_days:parseInt(du)||30});loadData()}
+async function updatePlanPrice(id,price){await sbUpdate('breeze_plans',id,{price:parseFloat(price)});loadData()}
+async function deletePlan(id){await sbDelete('breeze_plans',id);loadData()}
+async function addNews(){let t=document.getElementById('newsTitle').value,b=document.getElementById('newsBody').value;if(!t)return;await sbInsert('breeze_news',{title:t,body:b});loadData()}
+
+function searchMembers(){let q=document.getElementById('recSearchInput').value.toLowerCase();let res=members.filter(m=>m.full_name.toLowerCase().includes(q)||(m.national_id||'').includes(q)||(m.phone||'').includes(q)||(m.username||'').toLowerCase().includes(q));document.getElementById('recSearchResults').innerHTML=res.map(m=>`<div class="p-3 border rounded-lg flex justify-between"><div><b>${m.full_name}</b> - ${m.username}<br><span class="text-xs">بطاقة: ${m.national_id} - موبايل: ${m.phone} - حتى: ${m.expiry_date} - ${m.status}</span></div><button onclick="selectMemberForRenew('${m.id}')" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs">تجديد</button></div>`).join('')}
+function selectMemberForRenew(id){document.getElementById('renewMember').value=id;showRecTab('renew')}
+
+function filterReports(type){let now=new Date(),from,to;if(type==='thisMonth'){from=new Date(now.getFullYear(),now.getMonth(),1);to=new Date()}if(type==='lastMonth'){from=new Date(now.getFullYear(),now.getMonth()-1,1);to=new Date(now.getFullYear(),now.getMonth(),0)}if(type==='last7'){from=new Date(Date.now()-7*86400000);to=new Date()}if(type==='today'){from=new Date();from.setHours(0,0,0,0);to=new Date()}if(type==='custom'){let f=document.getElementById('customFrom').value,t=document.getElementById('customTo').value;if(!f||!t)return;from=new Date(f);to=new Date(t)}filterFrom=from;filterTo=to;let el=document.getElementById('reportPeriodLabel');if(el)el.innerText=from.toLocaleDateString('ar-EG')+' - '+to.toLocaleDateString('ar-EG');renderReports()}
+function renderReports(){if(!filterFrom)return;let filtered=entries.filter(e=>{let d=new Date(e.created_at);return d>=filterFrom&&d<=filterTo});let el=document.getElementById('statTotal');if(!el)return;el.innerText=filtered.length;let uniq=new Set(filtered.map(e=>e.member_id));document.getElementById('statUnique').innerText=uniq.size;document.getElementById('statPercent').innerText=members.length?Math.round(uniq.size/members.length*100)+'%':'';let days=Math.max(1,Math.ceil((filterTo-filterFrom)/86400000));document.getElementById('statAvg').innerText=(filtered.length/days).toFixed(1);let byDay={};filtered.forEach(e=>{let k=new Date(e.created_at).toLocaleDateString('ar-EG');byDay[k]=(byDay[k]||0)+1});let busy=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0];document.getElementById('statBusy').innerText=busy?busy[0]+' ('+busy[1]+')':'-';let typeCount={};filtered.forEach(e=>{typeCount[e.entry_type]=(typeCount[e.entry_type]||0)+1});document.getElementById('statByType').innerText=Object.entries(typeCount).map(x=>x[0]+':'+x[1]).join(' ');let dailyDiv=document.getElementById('dailyBars');let last15=[];for(let i=14;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let k=d.toLocaleDateString('ar-EG');last15.push({d:k,c:byDay[k]||0})}let max=Math.max(1,...last15.map(x=>x.c));dailyDiv.innerHTML=last15.map(x=>`<div class="flex-1 flex flex-col items-center"><div class="w-full bg-emerald-500 rounded-t" style="height:${x.c/max*90+10}px"></div><div class="text-[8px] mt-1">${x.d.slice(0,5)}</div></div>`).join('');let byMem={};filtered.forEach(e=>{byMem[e.member_id]=(byMem[e.member_id]||0)+1});let sorted=Object.entries(byMem).sort((a,b)=>b[1]-a[1]).slice(0,10);document.getElementById('top10').innerHTML=sorted.map(([id,c],i)=>{let m=members.find(x=>x.id===id);return `<div class="flex justify-between p-2 border rounded-lg ${i<3?'bg-yellow-50':''}"><span>${i+1}. ${m?.full_name||id.slice(0,8)}</span><span class="bg-emerald-600 text-white px-2 rounded-full text-xs">${c}</span></div>`}).join('');let search=document.getElementById('memberSearch').value.toLowerCase();let tableData=members.map(m=>{let cnt=byMem[m.id]||0;let last=filtered.filter(e=>e.member_id===m.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];return {...m,cnt,last:last?.created_at}}).filter(m=>!search||m.full_name.toLowerCase().includes(search)||m.username?.toLowerCase().includes(search)||(m.national_id||'').includes(search)).sort((a,b)=>b.cnt-a.cnt);document.getElementById('reportTable').innerHTML=tableData.map((m,i)=>`<tr class="border-b"><td class="p-2">${i+1}</td><td class="p-2">${m.full_name}</td><td class="p-2">${m.username}</td><td class="p-2">${m.phone}</td><td class="p-2">${m.national_id||''}</td><td class="p-2 font-bold">${m.cnt}</td><td class="p-2 text-xs">${m.last?new Date(m.last).toLocaleString('ar-EG'):''}</td><td class="p-2">${m.status||''}</td></tr>`).join('')}
+function exportCSV(){let rows=[['الاسم','العضوية','الموبايل','البطاقة','عدد الدخول','آخر دخول']];document.querySelectorAll('#reportTable tr').forEach(tr=>{let tds=tr.querySelectorAll('td');if(tds.length)rows.push([tds[1].innerText,tds[2].innerText,tds[3].innerText,tds[4].innerText,tds[5].innerText,tds[6].innerText])});let csv=rows.map(r=>r.join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='report-'+new Date().toISOString().slice(0,10)+'.csv';a.click()}
+
 function updateSecurityStats(){let today=new Date();today.setHours(0,0,0,0);let tEntries=entries.filter(e=>new Date(e.created_at)>=today);let sToday=document.getElementById('sToday');if(sToday){sToday.innerText=tEntries.length;document.getElementById('sUniqueToday').innerText=new Set(tEntries.map(e=>e.member_id)).size;let month=new Date();month.setDate(1);month.setHours(0,0,0,0);document.getElementById('sMonth').innerText=entries.filter(e=>new Date(e.created_at)>=month).length;}}
 
 async function startVideo(id){try{let v=document.getElementById(id);if(!v)return;let s=await navigator.mediaDevices.getUserMedia({video:{}});v.srcObject=s;}catch(e){}}
 function euclidean(a,b){let s=0;for(let i=0;i<a.length;i++){let d=a[i]-b[i];s+=d*d}return Math.sqrt(s)}
-async function captureFace(){let video=document.getElementById('video');let canvas=document.getElementById('canvas');if(!video.videoWidth)return;canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();if(det){faceDescriptor=Array.from(det.descriptor);document.getElementById('faceStatus').innerText='✓ تم التقاط البصمة - المسافة الدقيقة 0.45';}else document.getElementById('faceStatus').innerText='لم يتم العثور على وجه';}catch(e){faceDescriptor=[...Array(128)].map(()=>Math.random());document.getElementById('faceStatus').innerText='✓ تم (وضع تجريبي)'}}
+async function captureFace(){let video=document.getElementById('video');let canvas=document.getElementById('canvas');if(!video.videoWidth)return;canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();if(det){faceDescriptor=Array.from(det.descriptor);document.getElementById('faceStatus').innerText='✓ تم التقاط البصمة - دقة 0.45';}else document.getElementById('faceStatus').innerText='لم يتم العثور على وجه';}catch(e){faceDescriptor=[...Array(128)].map(()=>Math.random());document.getElementById('faceStatus').innerText='✓ تم (تجريبي)'}}
 async function verifyFace(){
-  let video=document.getElementById('secVideo');let resultDiv=document.getElementById('verifyResult');resultDiv.innerHTML='جاري الفحص بدقة 0.45...';
-  try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();let desc=det?Array.from(det.descriptor):[...Array(128)].map(()=>Math.random());let best=null,min=Infinity;members.forEach(m=>{if(m.face_descriptor){let d=Array.isArray(m.face_descriptor)?m.face_descriptor:(typeof m.face_descriptor==='string'?JSON.parse(m.face_descriptor):m.face_descriptor)||[];if(d.length){let dist=euclidean(desc,d);if(dist<min){min=dist;best=m}}}});if(best&&min<0.45){resultDiv.innerHTML=`<div class="bg-green-50 border border-green-200 p-3 rounded-xl"><div class="font-bold text-green-700">✓ ${best.full_name} - مسموح</div><div class="text-xs">المسافة: ${min.toFixed(3)} < 0.45 (دقيق)</div><div class="text-xs">${best.username} - ${best.phone}</div><button onclick="recordEntry('${best.id}')" class="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg">تسجيل دخول</button></div>`}else{resultDiv.innerHTML=`<div class="bg-red-50 border-2 border-red-300 p-4 rounded-xl"><div class="font-bold text-red-700 text-lg">وجه غير معروف - غير مسجل</div><div class="text-xs mt-1">المسافة: ${min===Infinity?'-':min.toFixed(3)} (يجب أن تكون أقل من 0.45)</div><div class="text-xs mt-2 text-red-600">هذا الوجه غير مسجل في النظام</div></div>`}}catch(e){resultDiv.innerHTML='<div class="bg-red-50 p-3 rounded-xl">خطأ: '+e.message+'</div>'}
+  let video=document.getElementById('secVideo');let resultDiv=document.getElementById('verifyResult');let fullDiv=document.getElementById('memberFullData');
+  resultDiv.innerHTML='جاري الفحص بدقة 0.45...';fullDiv.classList.add('hidden');
+  try{let det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();let desc=det?Array.from(det.descriptor):[...Array(128)].map(()=>Math.random());let best=null,min=Infinity;members.forEach(m=>{if(m.face_descriptor){let d=Array.isArray(m.face_descriptor)?m.face_descriptor:(typeof m.face_descriptor==='string'?JSON.parse(m.face_descriptor):m.face_descriptor)||[];if(d.length){let dist=euclidean(desc,d);if(dist<min){min=dist;best=m}}}});if(best&&min<0.45){
+    resultDiv.innerHTML=`<div class="bg-green-50 border border-green-200 p-3 rounded-xl"><div class="font-bold text-green-700 text-lg">✓ ${best.full_name} - مسموح</div><div class="text-xs">المسافة: ${min.toFixed(3)} < 0.45 - مطابق</div><div class="text-xs">بطاقة: ${best.national_id} - موبايل: ${best.phone}</div><button onclick="recordEntry('${best.id}')" class="mt-2 w-full bg-green-600 text-white px-4 py-2 rounded-lg font-bold">تسجيل دخول</button></div>`;
+    // عرض كل البيانات والاشتراكات
+    let memPayments=payments.filter(p=>p.member_id===best.id);
+    let sub=plans.find(p=>p.id===best.plan_id);
+    fullDiv.classList.remove('hidden');
+    fullDiv.innerHTML=`
+      <h4 class="font-bold mb-2">كل بيانات العضو وجميع اشتراكاته:</h4>
+      <div class="space-y-2 text-sm">
+        <div><b>الاسم:</b> ${best.full_name}</div>
+        <div><b>رقم العضوية:</b> ${best.username}</div>
+        <div><b>رقم البطاقة:</b> ${best.national_id}</div>
+        <div><b>الموبايل:</b> ${best.phone}</div>
+        <div><b>اليوزر:</b> ${best.national_id} - الباسورد: آخر 7 أرقام ${ (best.national_id||'').slice(-7)}</div>
+        <div><b>الحالة:</b> ${best.status} - صالح حتى: ${best.expiry_date}</div>
+        <div><b>الخدمة الحالية:</b> ${sub?sub.name+' - '+sub.price+'ج':'-'}</div>
+        <div><b>أفراد الأسرة:</b> ${best.family_members?.length||0}</div>
+        <div><b>سجل المدفوعات:</b></div>
+        <div class="max-h-32 overflow-auto border rounded p-2">${memPayments.map(p=>`<div class="flex justify-between text-xs py-1 border-b"><span>${p.plan_name} - ${p.amount}ج - ${p.payment_method}</span><span>${p.created_at?.slice(0,10)}</span></div>`).join('')||'لا يوجد'}</div>
+        <div><b>سجل الدخول هذا الشهر:</b> ${entries.filter(e=>e.member_id===best.id && new Date(e.created_at).getMonth()===new Date().getMonth()).length} مرة</div>
+      </div>`;
+  }else{
+    resultDiv.innerHTML=`<div class="bg-red-50 border-2 border-red-300 p-4 rounded-xl"><div class="font-bold text-red-700 text-lg">وجه غير معروف - غير مسجل</div><div class="text-xs mt-1">المسافة: ${min===Infinity?'-':min.toFixed(3)} (يجب <0.45)</div><div class="text-xs mt-2 text-red-600">هذا الوجه غير مسجل - برجاء التسجيل في الرسبشن أولا</div></div>`;
+  }}catch(e){resultDiv.innerHTML='<div class="bg-red-50 p-3 rounded-xl">خطأ: '+e.message+'</div>'}
 }
-async function recordEntry(memberId){await sbInsert('breeze_entries',{member_id:memberId,entry_type:'face',verified_by:currentUser.username});alert('✓ تم تسجيل الدخول - سيظهر في تقارير الشهر');loadData()}
+async function recordEntry(memberId){await sbInsert('breeze_entries',{member_id:memberId,entry_type:'face',verified_by:currentUser.username});alert('✓ تم تسجيل الدخول');loadData()}
 
 async function saveMember(){
-  let name=document.getElementById('mName').value,phone=document.getElementById('mPhone').value,national=document.getElementById('mNational').value,pass=document.getElementById('mPass').value||phone.slice(-4)||'1234',plan=document.getElementById('mPlan').value;
-  if(!name||!phone){alert('ادخل الاسم والموبايل');return}
+  let name=document.getElementById('mName').value.trim(),phone=document.getElementById('mPhone').value.trim(),national=document.getElementById('mNational').value.trim(),national2=document.getElementById('mNationalConfirm').value.trim(),plan=document.getElementById('mPlan').value;
+  if(!name||!phone||!national){alert('ادخل الاسم والموبايل ورقم البطاقة');return}
+  if(national!==national2){alert('رقم البطاقة غير متطابق');return}
+  if(national.length!==14){alert('رقم البطاقة يجب أن يكون 14 رقم');return}
+  // الباسورد آخر 7 أرقام من البطاقة كما طلبت
+  let password=national.slice(-7);
   let username='BZ-'+(1000+members.length+1);
   let expiry=new Date();expiry.setDate(expiry.getDate()+30);
-  let data={full_name:name,phone:phone,national_id:national,password:pass,username:username,plan_id:plan||null,expiry_date:expiry.toISOString().slice(0,10),status:'active',face_descriptor:faceDescriptor||null};
+  let data={full_name:name,phone:phone,national_id:national,password:password,username:username,plan_id:plan||null,expiry_date:expiry.toISOString().slice(0,10),status:'active',face_descriptor:faceDescriptor||null,family_members:[]};
   let res=await sbInsert('breeze_members',data);
-  if(res){document.getElementById('memberCreds').classList.remove('hidden');document.getElementById('memberCreds').innerHTML=`✓ تم التسجيل<br>اليوزر: <b>${username}</b><br>الموبايل: ${phone}<br>الباسورد: <b>${pass}</b><br>يقدر يدخل بـ أي منهم + الباسورد`;loadData()}
+  if(res){
+    document.getElementById('memberCreds').classList.remove('hidden');
+    document.getElementById('memberCreds').innerHTML=`
+      <div class="font-bold text-emerald-700">✓ تم التسجيل بنجاح</div>
+      <div class="mt-2 space-y-1">
+        <div>رقم العضوية: <b>${username}</b></div>
+        <div>رقم البطاقة (اليوزر): <b>${national}</b></div>
+        <div>الباسورد (آخر 7 أرقام): <b>${password}</b></div>
+        <div>الموبايل: ${phone}</div>
+        <div class="text-xs text-slate-500 mt-2">العضو يقدر يدخل بـ رقم البطاقة + آخر 7 أرقام، أو رقم العضوية + الباسورد، أو الموبايل + الباسورد</div>
+      </div>`;
+    loadData();
+  }
 }
 
-function setPayMethod(m){payMethod=m;document.querySelectorAll('.payM').forEach(b=>{b.classList.remove('bg-emerald-600','text-white');b.classList.add('bg-white','border')});event.target.classList.add('bg-emerald-600','text-white');event.target.classList.remove('bg-white','border');let div=document.getElementById('payMethodFields');if(m==='visa')div.innerHTML='<input placeholder="رقم الكارت 16 رقم" class="w-full p-2 border rounded-lg mb-2"><div class="flex gap-2"><input placeholder="MM/YY" class="flex-1 p-2 border rounded-lg"><input placeholder="CVV" class="flex-1 p-2 border rounded-lg"></div><div class="text-xs text-slate-500">سيتم الربط مع Paymob لاحقا</div>';else if(m==='instapay')div.innerHTML='<input placeholder="InstaPay ID" class="w-full p-2 border rounded-lg mb-2"><input type="file" class="w-full p-2 border rounded-lg text-sm"><div class="text-xs">حول على: '+(localStorage.getItem('instaId')||'mostafa@instapay')+'</div>';else if(m==='wallet')div.innerHTML='<select class="w-full p-2 border rounded-lg mb-2"><option>فودافون كاش</option><option>اتصالات كاش</option><option>أورنج كاش</option></select><div class="text-xs bg-emerald-50 p-2 rounded">فودافون: '+(localStorage.getItem('vodafone')||'01092101182')+'</div>';else div.innerHTML='<div class="text-xs">دفع كاش في الخزينة</div>'}
-function setRenewMethod(m){renewMethod=m;document.querySelectorAll('.rPayM').forEach(b=>{b.classList.remove('bg-emerald-600','text-white');b.classList.add('bg-white','border')});event.target.classList.add('bg-emerald-600','text-white');let div=document.getElementById('renewFields');if(m==='visa')div.innerHTML='<input placeholder="رقم الكارت" class="w-full p-2 border rounded-lg mb-2"><div class="flex gap-2"><input placeholder="MM/YY" class="flex-1 p-2 border rounded-lg"><input placeholder="CVV" class="flex-1 p-2 border rounded-lg"></div>';else if(m==='instapay')div.innerHTML='<div class="bg-yellow-50 p-2 rounded-lg text-xs mb-2">حول على: '+(localStorage.getItem('instaId')||'mostafa@instapay')+' ثم ارفع السكرين</div><input type="file" class="w-full p-2 border rounded-lg">';else if(m==='wallet')div.innerHTML='<div class="bg-emerald-50 p-2 rounded-lg text-xs mb-2">فودافون كاش: '+(localStorage.getItem('vodafone')||'01092101182')+'</div><input placeholder="رقم العملية" class="w-full p-2 border rounded-lg">';else div.innerHTML='<div class="text-xs">الدفع كاش في النادي</div>'}
+async function renewMembership(){
+  let memberId=document.getElementById('renewMember').value,planId=document.getElementById('renewPlan').value;
+  if(!memberId||!planId)return alert('اختر العضو والباقة');
+  let member=members.find(m=>m.id===memberId),plan=plans.find(p=>p.id===planId);
+  let expiry=new Date();expiry.setDate(expiry.getDate()+plan.duration_days);
+  await sbUpdate('breeze_members',memberId,{plan_id:planId,expiry_date:expiry.toISOString().slice(0,10),status:'active'});
+  await sbInsert('breeze_payments',{member_id:memberId,amount:plan.price,plan_name:plan.name,payment_method:'renew',transaction_id:'RENEW-'+Date.now(),status:'completed',paid_by:currentUser.username});
+  document.getElementById('renewResult').innerHTML=`✓ تم تجديد ${member.full_name} - باقة ${plan.name} - حتى ${expiry.toLocaleDateString('ar-EG')}`;
+  loadData();
+}
+
+function setPayMethod(m){payMethod=m;document.querySelectorAll('.payM').forEach(b=>{b.classList.remove('bg-emerald-600','text-white');b.classList.add('bg-white','border')});event.target.classList.add('bg-emerald-600','text-white');let div=document.getElementById('payMethodFields');if(m==='visa')div.innerHTML='<input placeholder="رقم الكارت" class="w-full p-2 border rounded-lg mb-2"><div class="flex gap-2"><input placeholder="MM/YY" class="flex-1 p-2 border rounded-lg"><input placeholder="CVV" class="flex-1 p-2 border rounded-lg"></div>';else if(m==='instapay')div.innerHTML='<input placeholder="InstaPay ID" class="w-full p-2 border rounded-lg mb-2"><input type="file" class="w-full p-2 border rounded-lg text-sm"><div class="text-xs">حول على: '+(localStorage.getItem('instaId')||'mostafa@instapay')+'</div>';else if(m==='wallet')div.innerHTML='<select class="w-full p-2 border rounded-lg mb-2"><option>فودافون كاش</option><option>اتصالات كاش</option><option>أورنج</option></select><div class="text-xs bg-emerald-50 p-2 rounded">فودافون: '+(localStorage.getItem('vodafone')||'01092101182')+'</div>';else div.innerHTML='<div class="text-xs">دفع كاش في الخزينة</div>'}
+function setRenewMethod(m){renewMethod=m;document.querySelectorAll('.rPayM').forEach(b=>{b.classList.remove('bg-emerald-600','text-white');b.classList.add('bg-white','border')});event.target.classList.add('bg-emerald-600','text-white');let div=document.getElementById('renewFields');if(m==='visa')div.innerHTML='<input placeholder="رقم الكارت" class="w-full p-2 border rounded-lg mb-2"><div class="flex gap-2"><input placeholder="MM/YY" class="flex-1 p-2 border rounded-lg"><input placeholder="CVV" class="flex-1 p-2 border rounded-lg"></div>';else if(m==='instapay')div.innerHTML='<div class="bg-yellow-50 p-2 rounded-lg text-xs mb-2">حول على: '+(localStorage.getItem('instaId')||'mostafa@instapay')+'</div><input type="file" class="w-full p-2 border rounded-lg">';else if(m==='wallet')div.innerHTML='<div class="bg-emerald-50 p-2 rounded-lg text-xs mb-2">فودافون: '+(localStorage.getItem('vodafone')||'01092101182')+'</div><input placeholder="رقم العملية" class="w-full p-2 border rounded-lg">';else div.innerHTML='<div class="text-xs">كاش في النادي</div>'}
 
 async function collectPayment(){
   let memberId=document.getElementById('payMember').value,planId=document.getElementById('payPlan').value,amount=document.getElementById('payAmount').value,trans=document.getElementById('payTransId').value||'CASH-'+Date.now();
@@ -216,14 +281,14 @@ async function collectPayment(){
   if(pay){let expiry=new Date();expiry.setDate(expiry.getDate()+(plan?.duration_days||30));await sbUpdate('breeze_members',memberId,{expiry_date:expiry.toISOString().slice(0,10)});showReceipt(member,plan,amount,payMethod,trans,expiry);loadData()}
 }
 async function renewOnline(){
-  let planId=document.getElementById('renewPlan').value,plan=plans.find(p=>p.id===planId);if(!plan){alert('اختر الباقة');return}
+  let planId=document.getElementById('memberRenewPlan').value,plan=plans.find(p=>p.id===planId);if(!plan)return alert('اختر الباقة');
   event.target.innerText='جاري الدفع...';
   setTimeout(async()=>{
     let trans=renewMethod.toUpperCase()+'-'+Date.now();let member=currentUser.memberData;
     await sbInsert('breeze_payments',{member_id:member.id,amount:plan.price,plan_name:plan.name,payment_method:renewMethod,transaction_id:trans,status:'completed',paid_by:'online'});
     let expiry=new Date();expiry.setDate(expiry.getDate()+plan.duration_days);await sbUpdate('breeze_members',member.id,{expiry_date:expiry.toISOString().slice(0,10)});
-    showReceipt(member,plan,plan.price,renewMethod,trans,expiry);loadData();document.querySelector('#memberPanel button').innerText='ادفع الآن';
-  },1500);
+    showReceipt(member,plan,plan.price,renewMethod,trans,expiry);loadData();event.target.innerText='ادفع الآن';
+  },1200);
 }
 
 function showReceipt(member,plan,amount,method,trans,expiry){
@@ -231,45 +296,34 @@ function showReceipt(member,plan,amount,method,trans,expiry){
   document.getElementById('rDate').innerText=new Date().toLocaleString('ar-EG');
   document.getElementById('rMember').innerText=member.full_name;
   document.getElementById('rUsername').innerText=member.username;
+  document.getElementById('rNational').innerText=member.national_id||'-';
   document.getElementById('rPhone').innerText=member.phone;
   document.getElementById('rPlan').innerText=plan?.name||'اشتراك';
   document.getElementById('rAmount').innerText=amount;
-  document.getElementById('rMethod').innerText={cash:'كاش 💵',visa:'فيزا 💳',instapay:'إنستا باي 📱',wallet:'محفظة 👛'}[method]||method;
+  document.getElementById('rMethod').innerText={cash:'كاش 💵',visa:'فيزا 💳',instapay:'إنستا باي 📱',wallet:'محفظة 👛',renew:'تجديد'}[method]||method;
   document.getElementById('rTrans').innerText=trans;
   document.getElementById('rExpiry').innerText=expiry.toLocaleDateString?expiry.toLocaleDateString('ar-EG'):new Date(expiry).toLocaleDateString('ar-EG');
   document.getElementById('rQR').src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+member.username;
   document.getElementById('receiptModal').classList.remove('hidden');
 }
 function closeReceipt(){document.getElementById('receiptModal').classList.add('hidden')}
-function downloadReceipt(){
-  let c=document.createElement('canvas');c.width=600;c.height=800;let ctx=c.getContext('2d');
-  ctx.fillStyle='white';ctx.fillRect(0,0,600,800);ctx.fillStyle='#0f172a';ctx.font='bold 22px Arial';ctx.fillText('Breeze Venue Club - ايصال دفع',120,50);
-  ctx.fillStyle='black';ctx.font='16px Arial';let y=100;
-  ['رقم الايصال: '+document.getElementById('rNo').innerText,'العضو: '+document.getElementById('rMember').innerText,'الموبايل: '+document.getElementById('rPhone').innerText,'الباقة: '+document.getElementById('rPlan').innerText,'المبلغ: '+document.getElementById('rAmount').innerText+' جنيه','طريقة الدفع: '+document.getElementById('rMethod').innerText,'رقم العملية: '+document.getElementById('rTrans').innerText,'التاريخ: '+document.getElementById('rDate').innerText,'صالح حتى: '+document.getElementById('rExpiry').innerText].forEach(t=>{ctx.fillText(t,20,y);y+=35});
-  ctx.fillText('شكرا لاشتراككم - 01092101182',150,700);
-  let a=document.createElement('a');a.download='receipt-'+Date.now()+'.png';a.href=c.toDataURL();a.click();
-}
+function printReceipt(){window.print()}
+function downloadReceipt(){let c=document.createElement('canvas');c.width=600;c.height=850;let ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,600,850);ctx.fillStyle='#0f172a';ctx.font='bold 20px Arial';ctx.fillText('Breeze Venue Club - ايصال دفع رسمي',100,40);ctx.fillStyle='black';ctx.font='14px Arial';let y=80;['رقم الايصال: '+document.getElementById('rNo').innerText,'العضو: '+document.getElementById('rMember').innerText,'البطاقة: '+document.getElementById('rNational').innerText,'الموبايل: '+document.getElementById('rPhone').innerText,'الخدمة: '+document.getElementById('rPlan').innerText,'المبلغ: '+document.getElementById('rAmount').innerText+' جنيه','الدفع: '+document.getElementById('rMethod').innerText,'العملية: '+document.getElementById('rTrans').innerText,'التاريخ: '+document.getElementById('rDate').innerText,'صالح حتى: '+document.getElementById('rExpiry').innerText].forEach(t=>{ctx.fillText(t,20,y);y+=35});ctx.fillText('شكرا لاشتراككم - 01092101182',150,750);let a=document.createElement('a');a.download='receipt-'+Date.now()+'.png';a.href=c.toDataURL();a.click();}
 
 function openForgot(){document.getElementById('otpModal').classList.remove('hidden');document.getElementById('otpStep1').classList.remove('hidden');document.getElementById('otpStep2').classList.add('hidden');document.getElementById('otpStep3').classList.add('hidden')}
 function closeOTP(){document.getElementById('otpModal').classList.add('hidden')}
-async function sendOTP(){
-  let phone=document.getElementById('otpPhone').value.trim();if(!phone){document.getElementById('otpMsg1').innerText='ادخل الموبايل';return}
-  let res=await sbSelect('breeze_members','phone=eq.'+encodeURIComponent(phone));
-  if(!res.length){document.getElementById('otpMsg1').innerText='رقم غير مسجل في النظام';return}
-  let otp=Math.floor(100000+Math.random()*900000).toString();
-  otpData={phone,otp,memberId:res[0].id,expiry:Date.now()+5*60000};
-  localStorage.setItem('breeze_otp_temp',JSON.stringify(otpData));
-  document.getElementById('demoOTP').innerText=otp;
-  document.getElementById('otpPhoneDisplay').innerText=phone;
-  document.getElementById('otpStep1').classList.add('hidden');document.getElementById('otpStep2').classList.remove('hidden');
-  startTimer();
-}
-let timerInt;
-function startTimer(){let t=300;clearInterval(timerInt);timerInt=setInterval(()=>{t--;let m=Math.floor(t/60).toString().padStart(2,'0'),s=(t%60).toString().padStart(2,'0');let el=document.getElementById('otpTimer');if(el)el.innerText=m+':'+s;if(t<=0)clearInterval(timerInt)},1000)}
-function verifyOTP(){let code=document.getElementById('otpCode').value.trim();if(!otpData)otpData=JSON.parse(localStorage.getItem('breeze_otp_temp')||'null');if(!otpData||Date.now()>otpData.expiry){document.getElementById('otpMsg2').innerText='الكود انتهى - أعد الإرسال';return}if(code===otpData.otp){document.getElementById('otpStep2').classList.add('hidden');document.getElementById('otpStep3').classList.remove('hidden')}else document.getElementById('otpMsg2').innerText='كود خاطئ';}
-async function saveNewPass(){let np=document.getElementById('newPass').value,cp=document.getElementById('confirmPass').value;if(!np||np!==cp){document.getElementById('otpMsg3').innerText='الباسورد غير متطابق';return}if(!otpData)return;let ok=await sbUpdate('breeze_members',otpData.memberId,{password:np});if(ok){document.getElementById('otpMsg3').innerText='✓ تم تغيير الباسورد - سيتم تسجيل الدخول تلقائيا';setTimeout(()=>{closeOTP();document.getElementById('loginUser').value=otpData.phone;document.getElementById('loginPass').value=np},1500)}else document.getElementById('otpMsg3').innerText='خطأ في الحفظ';}
+async function sendOTP(){let phone=document.getElementById('otpPhone').value.trim();if(!phone){document.getElementById('otpMsg1').innerText='ادخل الموبايل';return}let res=await sbSelect('breeze_members','phone=eq.'+encodeURIComponent(phone));if(!res.length){let all=await sbSelect('breeze_members','');res=all.filter(m=>m.phone===phone);if(!res.length){document.getElementById('otpMsg1').innerText='رقم غير مسجل';return}}let otp=Math.floor(100000+Math.random()*900000).toString();otpData={phone,otp,memberId:res[0].id,expiry:Date.now()+5*60000};localStorage.setItem('breeze_otp_temp',JSON.stringify(otpData));document.getElementById('demoOTP').innerText=otp;document.getElementById('otpStep1').classList.add('hidden');document.getElementById('otpStep2').classList.remove('hidden');startTimer()}
+let timerInt;function startTimer(){let t=300;clearInterval(timerInt);timerInt=setInterval(()=>{t--;let m=Math.floor(t/60).toString().padStart(2,'0'),s=(t%60).toString().padStart(2,'0');let el=document.getElementById('otpTimer');if(el)el.innerText=m+':'+s;if(t<=0)clearInterval(timerInt)},1000)}
+function verifyOTP(){let code=document.getElementById('otpCode').value.trim();if(!otpData)otpData=JSON.parse(localStorage.getItem('breeze_otp_temp')||'null');if(!otpData||Date.now()>otpData.expiry){document.getElementById('otpMsg2').innerText='الكود انتهى';return}if(code===otpData.otp){document.getElementById('otpStep2').classList.add('hidden');document.getElementById('otpStep3').classList.remove('hidden')}else document.getElementById('otpMsg2').innerText='كود خاطئ';}
+async function saveNewPass(){let np=document.getElementById('newPass').value,cp=document.getElementById('confirmPass').value;if(!np||np!==cp){document.getElementById('otpMsg3').innerText='الباسورد غير متطابق';return}if(!otpData)return;let ok=await sbUpdate('breeze_members',otpData.memberId,{password:np});if(ok){document.getElementById('otpMsg3').innerText='✓ تم - سيتم الدخول';setTimeout(()=>{closeOTP();document.getElementById('loginUser').value=otpData.phone;document.getElementById('loginPass').value=np},1200)}else document.getElementById('otpMsg3').innerText='خطأ';}
 
-function savePaySettings(){localStorage.setItem('paymobKey',document.getElementById('paymobKey').value);localStorage.setItem('instaId',document.getElementById('instaId').value);localStorage.setItem('vodafone',document.getElementById('vodafone').value);localStorage.setItem('etisalat',document.getElementById('etisalat').value);localStorage.setItem('enableOnline',document.getElementById('enableOnline').checked);alert('✓ تم حفظ إعدادات الدفع الأونلاين')}
+function renderFinance(){let total=payments.reduce((s,p)=>s+parseFloat(p.amount||0),0);let month=payments.filter(p=>new Date(p.created_at).getMonth()===new Date().getMonth()).reduce((s,p)=>s+parseFloat(p.amount||0),0);let cash=payments.filter(p=>p.payment_method==='cash').reduce((s,p)=>s+parseFloat(p.amount||0),0);let online=total-cash;let el=document.getElementById('accTotal');if(!el)return;el.innerText=total+' ج';document.getElementById('accMonth').innerText=month+' ج';document.getElementById('accCash').innerText=cash+' ج';document.getElementById('accOnline').innerText=online+' ج';document.getElementById('finTotal').innerText=total+' ج';document.getElementById('finMonth').innerText=month+' ج';document.getElementById('finCash').innerText=cash+' ج';document.getElementById('finOnline').innerText=online+' ج';document.getElementById('financeList').innerHTML=payments.map(p=>{let m=members.find(x=>x.id===p.member_id);return `<div class="flex justify-between p-2 border-b text-sm"><span>${m?.full_name||p.member_id} - ${p.plan_name} - ${p.payment_method}</span><span class="font-bold">${p.amount}ج - ${p.created_at?.slice(0,10)}</span></div>`}).join('');document.getElementById('accountsList').innerHTML=document.getElementById('financeList').innerHTML}
+
+function savePaySettings(){localStorage.setItem('paymobKey',document.getElementById('paymobKey').value);localStorage.setItem('instaId',document.getElementById('instaId').value);localStorage.setItem('vodafone',document.getElementById('vodafone').value);localStorage.setItem('etisalat',document.getElementById('etisalat').value);alert('تم الحفظ')}
+async function editMember(id){let m=members.find(x=>x.id===id);let newName=prompt('الاسم الجديد:',m.full_name);if(newName){await sbUpdate('breeze_members',id,{full_name:newName});loadData()}}
+async function deleteMember(id){if(confirm('حذف العضو نهائيا؟')){await sbDelete('breeze_members',id);loadData()}}
+
+function exportFinanceCSV(){let rows=[['العضو','البطاقة','الموبايل','الخدمة','المبلغ','طريقة الدفع','رقم العملية','التاريخ']];payments.forEach(p=>{let m=members.find(x=>x.id===p.member_id);rows.push([m?.full_name||'',m?.national_id||'',m?.phone||'',p.plan_name||'',p.amount||'',p.payment_method||'',p.transaction_id||'',p.created_at||''])});let csv=rows.map(r=>r.join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finance-'+new Date().toISOString().slice(0,10)+'.csv';a.click()}
 </script>
 </body>
 </html>
